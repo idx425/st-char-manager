@@ -631,7 +631,53 @@
 }
 
 
+/* ---- 原生面板注入按钮 ---- */
+
+#ccm_native_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 7px 8px;
+    padding: 10px 12px;
+    border: 1px solid rgb(34 211 238 / 38%);
+    border-radius: 11px;
+    background: linear-gradient(120deg, rgb(34 211 238 / 11%), rgb(129 140 248 / 11%));
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.92em;
+    transition: box-shadow 0.2s, transform 0.14s cubic-bezier(0.22, 0.8, 0.3, 1), border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#ccm_native_btn:hover {
+    border-color: rgb(34 211 238 / 60%);
+    box-shadow: 0 0 18px rgb(34 211 238 / 18%);
+}
+
+#ccm_native_btn:active {
+    transform: scale(0.98);
+}
+
+#ccm_native_btn i {
+    color: #22d3ee;
+}
+
+.ccm-takeover-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 8px;
+    font-size: 0.88em;
+    opacity: 0.9;
+    cursor: pointer;
+}
+
 /* ---- 文件夹栏 ---- */
+
 
 .ccm-folderbar {
     display: flex;

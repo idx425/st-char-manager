@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '1.1.0';
+    const VERSION = '1.2.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -45,6 +45,7 @@
         if (!Array.isArray(settings.folders)) settings.folders = [];
         if (!settings.cardFolder || typeof settings.cardFolder !== 'object') settings.cardFolder = {};
         if (![10, 20, 50].includes(settings.pageSize)) settings.pageSize = 20;
+        if (typeof settings.takeover !== 'boolean') settings.takeover = true;
         const save = () => ctx.saveSettingsDebounced();
 
         /* ---------------- 数据读取（每次都取最新 context，避免快照过期） ---------------- */
@@ -243,8 +244,11 @@
             );
         }
 
+        let lastUpdCheck = 0;
+
         async function checkUpdate(silent) {
             if (updState === 'checking' || updState === 'updating') return;
+            lastUpdCheck = Date.now();
             setUpdateState('checking');
             const scope = await resolveInstallScope();
             const tries = scope === null ? [true, false] : [scope];
@@ -512,6 +516,7 @@
                 deletedAvatars.add(ch.avatar);
                 settings.favs = settings.favs.filter((a) => a !== ch.avatar);
                 settings.recent = settings.recent.filter((a) => a !== ch.avatar);
+                delete settings.cardFolder[ch.avatar];
                 save();
                 if (closeDetail) closeDetail();
                 toastr.success('已删除「' + esc(charName(ch)) + '」', '角色卡管理');
@@ -770,6 +775,46 @@
             return chars().filter(Boolean).filter((ch) => selected.has(ch.avatar));
         }
 
+        async function batchDelete() {
+            const targets = batchTargets();
+            if (!targets.length) { toastr.warning('先点选角色卡'); return; }
+            if (cardOpBusy) return;
+            if (!confirm('确定删除选中的 ' + targets.length + ' 张角色卡？此操作不可恢复！')) return;
+            const delChats = confirm('是否连同这些角色的聊天记录一起删除？\n\n「确定」= 一起删除\n「取消」= 保留聊天记录');
+            if (!confirm('最后确认：删除 ' + targets.length + ' 张角色卡' + (delChats ? '及其全部聊天记录' : '（保留聊天记录）') + '？')) return;
+            cardOpBusy = true;
+            let ok = 0, fail = 0;
+            try {
+                for (const ch of targets) {
+                    try {
+                        const res = await fetchTimeout('/api/characters/delete', {
+                            method: 'POST',
+                            headers: ctx.getRequestHeaders(),
+                            body: JSON.stringify({ avatar_url: ch.avatar, delete_chats: delChats }),
+                        }, 20000);
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        deletedAvatars.add(ch.avatar);
+                        selected.delete(ch.avatar);
+                        settings.favs = settings.favs.filter((a) => a !== ch.avatar);
+                        settings.recent = settings.recent.filter((a) => a !== ch.avatar);
+                        delete settings.cardFolder[ch.avatar];
+                        ok++;
+                    } catch (e) {
+                        console.error('[角色卡管理] 删除失败', ch.avatar, e);
+                        fail++;
+                    }
+                }
+                save();
+                renderFilters();
+                renderGrid();
+                if (fail) toastr.warning('成功 ' + ok + ' 张，失败 ' + fail + ' 张（详见控制台）', '批量删除完成');
+                else toastr.success('已删除 ' + ok + ' 张角色卡', '角色卡管理');
+                if (ok && confirm('删除成功，需要刷新页面同步酒馆的角色列表。现在刷新吗？')) location.reload();
+            } finally {
+                cardOpBusy = false;
+            }
+        }
+
         function renderBatchBar() {
             const bar = $('#ccm_batchbar');
             if (!bar.length) return;
@@ -817,6 +862,9 @@
                     }
                     toastr.success('已全部触发下载', '角色卡管理');
                 }).appendTo(bar);
+            $('<button class="menu_button ccm-btn ccm-danger"><i class="fa-solid fa-trash"></i> 删除</button>')
+                .attr('title', '删除选中的角色卡（多重确认）')
+                .on('click', batchDelete).appendTo(bar);
             $('<button class="menu_button ccm-btn ccm-btn-primary"><i class="fa-solid fa-circle-check"></i> 完成</button>')
                 .on('click', toggleBatchMode).appendTo(bar);
         }
@@ -979,6 +1027,8 @@
                 }, 160);
             });
             $('#ccm_batch').on('click', toggleBatchMode).toggleClass('ccm-head-on', selectMode);
+            // 打开管理器时顺带查一次更新（10 分钟内不重复）
+            if (Date.now() - lastUpdCheck > 10 * 60 * 1000) checkUpdate(true);
             $('#ccm_refresh').on('click', () => {
                 renderFilters();
                 renderGrid();
@@ -986,6 +1036,40 @@
             });
             renderFilters();
             renderGrid();
+        }
+
+        /* ---------------- 原生角色面板：注入入口 + 接管 ---------------- */
+        function setupNativeEntry() {
+            const injectBtn = () => {
+                if ($('#ccm_native_btn').length) return;
+                // 优先插在原生面板搜索栏下方；不同版本兜底到面板容器顶部
+                const fixedTop = $('#charListFixedTop');
+                const block = $('#rm_characters_block');
+                if (!fixedTop.length && !block.length) return;
+                const btn = $('<div id="ccm_native_btn" tabindex="0" title="文件夹 / 分页 / 批量管理">' +
+                    '<i class="fa-solid fa-address-book"></i><span>角色卡管理器</span></div>');
+                btn.on('click', (e) => {
+                    e.stopPropagation();
+                    openManager();
+                });
+                if (fixedTop.length) fixedTop.after(btn);
+                else block.prepend(btn);
+            };
+            injectBtn();
+            setTimeout(injectBtn, 2500);
+
+            // 接管：点开酒馆右侧角色面板时，自动在其上打开管理器（可在扩展设置里关闭）
+            $(document).on('click.ccmtakeover', '#rightNavDrawerIcon, #rightNavHolder .drawer-toggle', () => {
+                if (!settings.takeover) return;
+                setTimeout(() => {
+                    const panel = $('#right-nav-panel');
+                    // 面板收起时（这次点击是在关闭面板）不打开
+                    if (panel.length && !panel.is(':visible')) return;
+                    if ($('#ccm_manager_modal').length) return;
+                    injectBtn();
+                    openManager();
+                }, 220);
+            });
         }
 
         /* ---------------- 魔棒菜单入口 ---------------- */
@@ -1071,6 +1155,10 @@
                 <button id="ccm_update_btn" class="menu_button ccm-btn"><i class="fa-solid fa-satellite-dish"></i> 检查更新</button>
               </div>
               <button id="ccm_open_btn" class="menu_button ccm-btn ccm-btn-primary ccm-open-btn"><i class="fa-solid fa-address-book"></i> 打开角色卡管理器</button>
+              <label class="checkbox_label ccm-takeover-row" for="ccm_takeover">
+                <input id="ccm_takeover" type="checkbox">
+                <span>接管原生角色面板（点开酒馆角色列表时自动进入管理器）</span>
+              </label>
               <small class="ccm-note">快捷入口：输入框旁魔棒菜单 → 角色卡管理，或命令 /charman；按名称切换：/charswitch 角色名。文件夹、收藏与最近记录都存于本机酒馆设置中，不修改角色卡文件。</small>
             </div>
           </div>
@@ -1085,11 +1173,21 @@
             checkUpdate(false);
         });
         $('#ccm_open_btn').on('click', () => openManager());
+        $('#ccm_takeover').prop('checked', settings.takeover).on('change', function () {
+            settings.takeover = this.checked;
+            save();
+            toastr.info(this.checked ? '已开启：点开角色面板会自动进入管理器' : '已关闭接管，可从魔棒菜单或此处打开', '角色卡管理');
+        });
 
+        setupNativeEntry();
         setupWandMenu();
         setupSlashCommand();
         setupRecentTracking();
         setTimeout(() => checkUpdate(true), 3000);
+        // 周期性自动检测更新：酒馆长时间开着也能收到新版本弹窗提醒（每次会话最多提醒一次）
+        setInterval(() => {
+            if (updState === 'idle' || updState === 'latest') checkUpdate(true);
+        }, 45 * 60 * 1000);
 
         console.log('[角色卡管理] v' + VERSION + ' 已加载');
     });
