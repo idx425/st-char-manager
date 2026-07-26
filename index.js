@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '2.1.0';
+    const VERSION = '2.1.1';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -44,7 +44,13 @@
         if (!['recent', 'name', 'added'].includes(settings.sort)) settings.sort = 'recent';
         if (!Array.isArray(settings.folders)) settings.folders = [];
         if (!settings.cardFolder || typeof settings.cardFolder !== 'object') settings.cardFolder = {};
-        if (![10, 20, 50].includes(settings.pageSize)) settings.pageSize = 20;
+        // 每页数量必须是 3 的倍数：网格固定一排三张，除不尽会在页尾留空位
+        // （老版本存的 10/20/50 自动迁移到最接近的档位）
+        const PAGE_SIZES = [12, 24, 48];
+        if (!PAGE_SIZES.includes(settings.pageSize)) {
+            const old = Number(settings.pageSize) || 24;
+            settings.pageSize = PAGE_SIZES.reduce((a, b) => Math.abs(b - old) < Math.abs(a - old) ? b : a);
+        }
         if (typeof settings.takeover !== 'boolean') settings.takeover = true;
         if (!['chat', 'detail'].includes(settings.tapAction)) settings.tapAction = 'chat';
         const save = () => ctx.saveSettingsDebounced();
@@ -875,9 +881,9 @@
             bar.append(mk('fa-angle-right', curPage + 1, curPage >= pages));
             bar.append(mk('fa-angles-right', pages, curPage >= pages));
             $('<button type="button" class="ccm-pgbtn ccm-pgsize"></button>').text(settings.pageSize + '/页')
-                .attr('title', '切换每页数量（10/20/50）')
+                .attr('title', '切换每页数量（12/24/48）')
                 .on('click', () => {
-                    const opts = [10, 20, 50];
+                    const opts = PAGE_SIZES;
                     settings.pageSize = opts[(opts.indexOf(settings.pageSize) + 1) % opts.length];
                     save();
                     curPage = 1;
