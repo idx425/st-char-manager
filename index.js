@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '2.0.0';
+    const VERSION = '2.1.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -139,7 +139,9 @@
         /* ---------------- 核心：切换角色 ---------------- */
         async function switchToChar(ch) {
             const c = getCtx();
-            const idx = c.characters.findIndex((x) => x && x.avatar === ch.avatar);
+            const idx = (c && Array.isArray(c.characters))
+                ? c.characters.findIndex((x) => x && x.avatar === ch.avatar)
+                : -1;
             if (idx < 0) {
                 toastr.error('角色列表里找不到「' + esc(charName(ch)) + '」，试试点右上角刷新', '角色卡管理');
                 return false;
@@ -446,7 +448,52 @@
                 if ($(this).data('fb')) return;
                 $(this).data('fb', 1).attr('src', thumbUrl(ch));
             });
-            box.find('.ccm-detail-name').text(charName(ch));
+            /* 卡名 + 快速改名（写回本地卡片文件） */
+            const nameEl = box.find('.ccm-detail-name');
+            let renameBusy = false;
+            const renderName = () => {
+                nameEl.empty().append(
+                    $('<span class="ccm-detail-name-text"></span>').text(charName(ch)),
+                    $('<i class="fa-solid fa-pen ccm-name-edit" title="修改卡名（保存到本地卡片文件）"></i>')
+                        .on('click', startRename),
+                );
+            };
+            const startRename = () => {
+                if (renameBusy) return;
+                nameEl.empty();
+                const input = $('<input class="text_pole ccm-name-input" maxlength="100" autocomplete="off">').val(charName(ch));
+                const okBtn = $('<button type="button" class="menu_button ccm-btn ccm-btn-primary ccm-name-op" title="保存新卡名"><i class="fa-solid fa-check"></i></button>');
+                const cancelBtn = $('<button type="button" class="menu_button ccm-btn ccm-name-op" title="取消"><i class="fa-solid fa-xmark"></i></button>');
+                nameEl.append(input, okBtn, cancelBtn);
+                input.trigger('focus');
+                try { input[0].select(); } catch { /* 部分移动端 WebView 不支持 */ }
+                input.on('keydown', (e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') okBtn.trigger('click');
+                    if (e.key === 'Escape') renderName();
+                });
+                cancelBtn.on('click', renderName);
+                okBtn.on('click', async () => {
+                    const nv = String(input.val() || '').trim();
+                    if (!nv) { toastr.warning('卡名不能为空', '角色卡管理'); return; }
+                    if (nv === charName(ch)) { renderName(); return; }
+                    renameBusy = true;
+                    okBtn.prop('disabled', true).html('<i class="fa-solid fa-circle-notch fa-spin"></i>');
+                    cancelBtn.prop('disabled', true);
+                    try {
+                        await renameCard(ch, nv);
+                        toastr.success('卡名已改为「' + esc(nv) + '」，已保存到本地卡片文件', '角色卡管理');
+                    } catch (err) {
+                        console.error('[角色卡管理] 改名失败', err);
+                        toastr.error('改名失败：' + String(err && err.message || err), '角色卡管理');
+                    } finally {
+                        renameBusy = false;
+                        renderName();
+                        renderGrid();
+                    }
+                });
+            };
+            renderName();
             const subParts = [];
             if (charCreator(ch)) subParts.push('作者 ' + charCreator(ch));
             if (charVersion(ch)) subParts.push('v' + charVersion(ch));
@@ -572,6 +619,32 @@
 
         let cardOpBusy = false;
 
+        /* 改名走 merge-attributes：深合并写回本地卡片文件（和酒馆自带 /char-update 命令同一接口），
+           不改头像文件名，所以标签/文件夹/收藏/聊天绑定（都按头像文件名索引）全部保持有效 */
+        async function renameCard(ch, newName) {
+            const res = await fetchTimeout('/api/characters/merge-attributes', {
+                method: 'POST',
+                headers: ctx.getRequestHeaders(),
+                body: JSON.stringify({ avatar: ch.avatar, name: newName, data: { name: newName } }),
+            }, 15000);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            ch.name = newName;
+            if (ch.data) ch.data.name = newName;
+            const cached = fullCache.get(ch.avatar);
+            if (cached && cached !== ch) {
+                cached.name = newName;
+                if (cached.data) cached.data.name = newName;
+            }
+            const c = getCtx();
+            const live = c && Array.isArray(c.characters) && c.characters.find((x) => x && x.avatar === ch.avatar);
+            if (live && live !== ch) {
+                live.name = newName;
+                if (live.data) live.data.name = newName;
+            }
+            // 让酒馆自己的列表/聊天界面也同步新名字
+            await refreshCharList();
+        }
+
         async function duplicateCard(ch) {
             if (cardOpBusy) return;
             if (!confirm('创建「' + charName(ch) + '」的副本？')) return;
@@ -583,8 +656,15 @@
                     body: JSON.stringify({ avatar_url: ch.avatar }),
                 }, 15000);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
-                toastr.success('副本已创建，刷新页面后可见', '角色卡管理');
-                if (confirm('副本已创建，需要刷新页面才会出现在列表里。现在刷新吗？')) location.reload();
+                const refreshed = await refreshCharList();
+                if (refreshed) {
+                    renderFilters();
+                    renderGrid();
+                    toastr.success('副本已创建', '角色卡管理');
+                } else {
+                    toastr.success('副本已创建，刷新页面后可见', '角色卡管理');
+                    if (confirm('副本已创建，需要刷新页面才会出现在列表里。现在刷新吗？')) location.reload();
+                }
             } catch (err) {
                 console.error('[角色卡管理]', err);
                 toastr.error('复制失败：' + String(err && err.message || err), '角色卡管理');
@@ -613,9 +693,11 @@
                 delete settings.cardFolder[ch.avatar];
                 save();
                 if (closeDetail) closeDetail();
+                const refreshed = await refreshCharList();
+                renderFilters();
+                renderGrid();
                 toastr.success('已删除「' + esc(charName(ch)) + '」', '角色卡管理');
-                if (confirm('删除成功，需要刷新页面同步角色列表。现在刷新吗？')) location.reload();
-                else { renderFilters(); renderGrid(); }
+                if (!refreshed && confirm('删除成功，需要刷新页面同步角色列表。现在刷新吗？')) location.reload();
             } catch (err) {
                 console.error('[角色卡管理]', err);
                 toastr.error('删除失败：' + String(err && err.message || err), '角色卡管理');
@@ -920,11 +1002,12 @@
                     }
                 }
                 save();
+                const refreshed = ok ? await refreshCharList() : false;
                 renderFilters();
                 renderGrid();
                 if (fail) toastr.warning('成功 ' + ok + ' 张，失败 ' + fail + ' 张（详见控制台）', '批量删除完成');
                 else toastr.success('已删除 ' + ok + ' 张角色卡', '角色卡管理');
-                if (ok && confirm('删除成功，需要刷新页面同步酒馆的角色列表。现在刷新吗？')) location.reload();
+                if (ok && !refreshed && confirm('删除成功，需要刷新页面同步酒馆的角色列表。现在刷新吗？')) location.reload();
             } finally {
                 cardOpBusy = false;
             }

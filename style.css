@@ -393,7 +393,8 @@
     flex: 1;
     overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    /* 固定一排三张：列数再多卡名就放不下了，宽屏让卡变大而不是变多 */
+    grid-template-columns: repeat(3, 1fr);
     /* auto 行高在 flex+滚动容器里会被压塌（卡片被切成扁条），必须显式撑起 */
     grid-auto-rows: max-content;
     gap: 11px;
@@ -414,14 +415,12 @@
 
 @media (min-width: 640px) {
     .ccm-grid {
-        grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
         gap: 13px;
     }
 }
 
 @media (min-width: 1100px) {
     .ccm-grid {
-        grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
         gap: 15px;
         padding: 15px 18px 18px;
     }
@@ -654,6 +653,13 @@
 }
 
 .ccm-detail-name {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    overflow-wrap: anywhere;
+}
+
+.ccm-detail-name-text {
     font-size: 1.16em;
     font-weight: 700;
     background: var(--ccm-grad);
@@ -661,6 +667,44 @@
     background-clip: text;
     color: transparent;
     overflow-wrap: anywhere;
+    min-width: 0;
+}
+
+.ccm-name-edit {
+    flex: none;
+    font-size: 0.82em;
+    padding: 7px;
+    margin: -7px;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ccm-name-edit:hover {
+    opacity: 1;
+    color: var(--ccm-c1);
+}
+
+.ccm-name-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0 !important;
+    font-size: 0.98em !important;
+}
+
+.ccm-name-op {
+    flex: none;
+    padding: 7px 11px !important;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .ccm-name-edit {
+        font-size: 0.95em;
+        padding: 10px;
+        margin: -10px;
+        opacity: 0.65;
+    }
 }
 
 .ccm-detail-sub {
