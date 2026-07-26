@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '1.5.0';
+    const VERSION = '2.0.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -362,10 +362,57 @@
             return { overlay, close };
         }
 
-        /* ---------------- 详情弹窗 ---------------- */
-        function escapeText(s) {
-            return String(s || '');
+        /* ---------------- 完整卡片数据补全 ----------------
+           新版酒馆（含 TT）对角色列表做了"浅数据"优化：列表接口只返回名字/头像等
+           轻量字段，description / first_mes 等正文必须单独调 /api/characters/get
+           才能拿到 —— 之前详情页直接读列表快照，所以简介显示为空 */
+        const fullCache = new Map();
+
+        function isShallow(ch) {
+            return !!ch.shallow || (!charDesc(ch) && !charFirstMes(ch));
         }
+
+        async function hydrateChar(ch) {
+            if (!isShallow(ch)) return ch;
+            if (fullCache.has(ch.avatar)) return fullCache.get(ch.avatar);
+            try {
+                const res = await fetchTimeout('/api/characters/get', {
+                    method: 'POST',
+                    headers: ctx.getRequestHeaders(),
+                    body: JSON.stringify({ avatar_url: ch.avatar }),
+                }, 10000);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const full = await res.json();
+                if (full && (full.name || full.data)) {
+                    const merged = Object.assign({}, ch, full, { avatar: ch.avatar, shallow: false });
+                    fullCache.set(ch.avatar, merged);
+                    return merged;
+                }
+            } catch (e) {
+                console.warn('[角色卡管理] 获取完整卡片数据失败', ch.avatar, e);
+            }
+            return ch;
+        }
+
+        /* ---------------- 复制到剪贴板（带降级） ---------------- */
+        function fallbackCopy(txt, done) {
+            const ta = $('<textarea>').val(txt).css({ position: 'fixed', opacity: 0 }).appendTo('body');
+            ta[0].select();
+            try { document.execCommand('copy'); done(); }
+            catch { toastr.warning('复制失败，请手动长按选择文本', '角色卡管理'); }
+            ta.remove();
+        }
+
+        function copyText(txt, label) {
+            const done = () => toastr.success(label + '已复制到剪贴板', '角色卡管理');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, done));
+            } else {
+                fallbackCopy(txt, done);
+            }
+        }
+
+        /* ---------------- 详情弹窗 ---------------- */
 
         function openDetail(ch) {
             const tags = charTags(ch);
@@ -387,13 +434,8 @@
                       </div>
                     </div>
                     <div class="ccm-detail-btns"></div>
-                    <div class="ccm-detail-section" data-sec="desc">
-                      <div class="ccm-detail-sec-title">角色描述</div>
-                      <div class="ccm-detail-sec-text"></div>
-                    </div>
-                    <div class="ccm-detail-section" data-sec="first">
-                      <div class="ccm-detail-sec-title">开场白</div>
-                      <div class="ccm-detail-sec-text"></div>
+                    <div class="ccm-detail-secs">
+                      <div class="ccm-skel"><span></span><span></span><span></span><span></span></div>
                     </div>
                   </div>
                 </div>`);
@@ -437,11 +479,53 @@
             };
             renderDetailFolder();
 
-            const desc = charDesc(ch), first = charFirstMes(ch);
-            box.find('.ccm-detail-stats').text(`描述 ${desc.length} 字 · 开场白 ${first.length} 字`);
-            const secs = box.find('.ccm-detail-section');
-            secs.filter('[data-sec="desc"]').find('.ccm-detail-sec-text').text(escapeText(desc) || '（空）');
-            secs.filter('[data-sec="first"]').find('.ccm-detail-sec-text').text(escapeText(first) || '（空）');
+            box.find('.ccm-detail-stats').text('正在读取完整卡片数据…');
+
+            const secsBox = box.find('.ccm-detail-secs');
+            const renderSections = (full) => {
+                secsBox.empty();
+                const alts = (full.data && Array.isArray(full.data.alternate_greetings))
+                    ? full.data.alternate_greetings.map((g) => String(g || '')).filter((g) => g.trim())
+                    : [];
+                const sections = [
+                    ['角色描述', charDesc(full)],
+                    ['性格', String(full.personality || (full.data && full.data.personality) || '')],
+                    ['场景', String(full.scenario || (full.data && full.data.scenario) || '')],
+                    ['开场白', charFirstMes(full)],
+                ];
+                alts.forEach((g, i) => sections.push(['备选开场白 ' + (i + 1) + '/' + alts.length, g]));
+                sections.push(['创作者注释', String((full.data && full.data.creator_notes) || full.creatorcomment || '')]);
+                let shown = 0;
+                for (const [title, text] of sections) {
+                    if (!String(text).trim()) continue;
+                    shown++;
+                    const sec = $('<div class="ccm-detail-section"></div>');
+                    const head = $('<div class="ccm-detail-sec-title"></div>').appendTo(sec);
+                    $('<span></span>').text(title).appendTo(head);
+                    $('<i class="fa-regular fa-copy ccm-sec-copy" title="复制这段文字"></i>')
+                        .on('click', () => copyText(text, '「' + esc(title) + '」')).appendTo(head);
+                    $('<div class="ccm-detail-sec-text"></div>').text(text).appendTo(sec);
+                    secsBox.append(sec);
+                }
+                if (!shown) {
+                    secsBox.append($('<div class="ccm-detail-section"><div class="ccm-detail-sec-text ccm-dim">这张卡没有文字内容（描述、开场白等均为空）</div></div>'));
+                }
+                const desc = charDesc(full), first = charFirstMes(full);
+                const bits = ['描述 ' + desc.length + ' 字', '开场白 ' + first.length + ' 字'];
+                if (alts.length) bits.push('备选 ' + alts.length + ' 条');
+                box.find('.ccm-detail-stats').text(bits.join(' · '));
+                const sp = [];
+                if (charCreator(full)) sp.push('作者 ' + charCreator(full));
+                if (charVersion(full)) sp.push('v' + charVersion(full));
+                if (lastChatTs(ch)) sp.push('最近聊天 ' + new Date(lastChatTs(ch)).toLocaleDateString());
+                box.find('.ccm-detail-sub').text(sp.join(' · ') || '暂无附加信息');
+            };
+
+            hydrateChar(ch).then((full) => {
+                // 弹窗可能在数据到达前就被关掉了
+                if (!document.body.contains(box[0])) return;
+                renderSections(full);
+            });
 
             const btns = box.find('.ccm-detail-btns');
             $('<button class="menu_button ccm-btn ccm-btn-primary"><i class="fa-solid fa-comment"></i> 开始聊天</button>')
@@ -573,11 +657,14 @@
             }
             const q = searchText.trim().toLowerCase();
             if (q) {
-                list = list.filter((ch) =>
-                    charName(ch).toLowerCase().includes(q) ||
-                    charCreator(ch).toLowerCase().includes(q) ||
-                    charDesc(ch).toLowerCase().includes(q) ||
-                    charTags(ch).some((t) => String(t.name).toLowerCase().includes(q)));
+                // 浅数据卡的描述为空，用已补全的缓存兜底，让看过详情的卡也能按描述搜到
+                list = list.filter((ch) => {
+                    const f = fullCache.get(ch.avatar) || ch;
+                    return charName(ch).toLowerCase().includes(q) ||
+                        charCreator(f).toLowerCase().includes(q) ||
+                        charDesc(f).toLowerCase().includes(q) ||
+                        charTags(ch).some((t) => String(t.name).toLowerCase().includes(q));
+                });
             }
             if (filterMode !== 'recent') {
                 if (settings.sort === 'name') {
@@ -691,7 +778,18 @@
                 .prop('disabled', dis).on('click', () => go(p));
             bar.append(mk('fa-angles-left', 1, curPage <= 1));
             bar.append(mk('fa-angle-left', curPage - 1, curPage <= 1));
-            bar.append($('<span class="ccm-pginfo"></span>').text(curPage + ' / ' + pages));
+            const info = $('<span class="ccm-pginfo"></span>').text(curPage + ' / ' + pages);
+            if (pages > 2) {
+                info.addClass('ccm-pginfo-jump').attr('title', '点击跳转到指定页')
+                    .on('click', () => {
+                        const v = prompt('跳转到第几页？(1 - ' + pages + ')', String(curPage));
+                        if (v === null) return;
+                        const n = parseInt(v, 10);
+                        if (!Number.isFinite(n)) { toastr.warning('请输入数字页码'); return; }
+                        go(n);
+                    });
+            }
+            bar.append(info);
             bar.append(mk('fa-angle-right', curPage + 1, curPage >= pages));
             bar.append(mk('fa-angles-right', pages, curPage >= pages));
             $('<button type="button" class="ccm-pgbtn ccm-pgsize"></button>').text(settings.pageSize + '/页')
@@ -1013,7 +1111,11 @@
 
         function managerInnerHtml() {
             return `
-                  <input id="ccm_search" class="text_pole ccm-search" placeholder="搜索名称 / 作者 / 标签 / 描述…" autocomplete="off">
+                  <div class="ccm-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass ccm-search-icon"></i>
+                    <input id="ccm_search" class="text_pole ccm-search" placeholder="搜索名称 / 作者 / 标签 / 描述…" autocomplete="off">
+                    <i class="fa-solid fa-circle-xmark ccm-search-clear" id="ccm_search_clear" title="清空搜索"></i>
+                  </div>
                   <div id="ccm_quickbar" class="ccm-quickbar"></div>
                   <div id="ccm_modes" class="ccm-modes"></div>
                   <div id="ccm_folderbar" class="ccm-folderbar"></div>
@@ -1025,8 +1127,12 @@
 
         function bindManagerControls(box) {
             let searchTimer = null;
-            box.find('#ccm_search').val(searchText).on('input', function () {
+            const searchInput = box.find('#ccm_search');
+            const searchClear = box.find('#ccm_search_clear');
+            const syncClear = () => searchClear.toggleClass('ccm-show', !!searchInput.val());
+            searchInput.val(searchText).on('input', function () {
                 searchText = this.value;
+                syncClear();
                 // 防抖：角色多时每个按键都全量重绘会卡，尤其在手机上
                 clearTimeout(searchTimer);
                 searchTimer = setTimeout(() => {
@@ -1035,6 +1141,15 @@
                     $('#ccm_grid').scrollTop(0);
                 }, 160);
             });
+            searchClear.on('click', () => {
+                searchText = '';
+                searchInput.val('').trigger('focus');
+                syncClear();
+                curPage = 1;
+                renderGrid();
+                $('#ccm_grid').scrollTop(0);
+            });
+            syncClear();
             box.find('#ccm_batch').on('click', toggleBatchMode).toggleClass('ccm-head-on', selectMode);
             box.find('#ccm_refresh').on('click', () => {
                 renderFilters();
@@ -1294,9 +1409,15 @@
             try {
                 const c = getCtx();
                 if (c && c.eventSource && c.event_types && c.event_types.CHAT_CHANGED) {
+                    let refreshTimer = null;
                     c.eventSource.on(c.event_types.CHAT_CHANGED, () => {
                         const a = curAvatar();
                         if (a) recordRecent(a);
+                        // 从原生界面切换角色后，嵌入网格上的「当前」标记会过期，轻量刷新
+                        clearTimeout(refreshTimer);
+                        refreshTimer = setTimeout(() => {
+                            if ($('#ccm_grid').length) renderGrid();
+                        }, 300);
                     });
                 }
             } catch (e) {

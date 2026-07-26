@@ -271,16 +271,57 @@
     height: min(88vh, 88dvh);
 }
 
+.ccm-search-wrap {
+    position: relative;
+    margin: 12px 14px 0;
+}
+
+.ccm-search-icon {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.82em;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.ccm-search-clear {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 9px;
+    font-size: 0.92em;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.18s, color 0.15s;
+    pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ccm-search-clear.ccm-show {
+    opacity: 0.55;
+    pointer-events: auto;
+}
+
+.ccm-search-clear:hover {
+    opacity: 1;
+    color: var(--ccm-c1);
+}
+
 .ccm-search {
-    margin: 12px 14px 0 !important;
-    width: calc(100% - 28px) !important;
-    border-radius: 11px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    padding-left: 34px !important;
+    padding-right: 34px !important;
+    border-radius: 12px !important;
     transition: box-shadow 0.25s, border-color 0.25s;
 }
 
 .ccm-search:focus {
-    border-color: rgb(34 211 238 / 45%) !important;
-    box-shadow: 0 0 0 1px rgb(34 211 238 / 25%), 0 0 18px rgb(34 211 238 / 10%) !important;
+    border-color: rgb(34 211 238 / 40%) !important;
+    box-shadow: 0 0 0 1px rgb(34 211 238 / 20%) !important;
     outline: none !important;
 }
 
@@ -294,14 +335,14 @@
 
 .ccm-fchip,
 .ccm-tchip {
-    border: 1px solid rgb(255 255 255 / 16%);
+    border: 1px solid rgb(255 255 255 / 11%);
     border-radius: 999px;
-    background: linear-gradient(180deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 2%)), rgb(8 12 20 / 35%);
-    color: inherit;
+    background: rgb(255 255 255 / 3.5%);
+    color: rgb(255 255 255 / 72%);
     font-size: 0.82em;
     padding: 5px 13px;
     cursor: pointer;
-    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
     white-space: nowrap;
 }
 
@@ -317,9 +358,10 @@
 
 .ccm-fchip-on,
 .ccm-tchip-on {
-    border-color: rgb(34 211 238 / 60%);
-    background: linear-gradient(120deg, rgb(34 211 238 / 16%), rgb(129 140 248 / 16%));
-    box-shadow: var(--ccm-glow);
+    border-color: rgb(34 211 238 / 55%);
+    background: rgb(34 211 238 / 10%);
+    color: #d9f6fc;
+    box-shadow: 0 0 12px rgb(34 211 238 / 10%);
 }
 
 .ccm-fchip-sort {
@@ -377,6 +419,14 @@
     }
 }
 
+@media (min-width: 1100px) {
+    .ccm-grid {
+        grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+        gap: 15px;
+        padding: 15px 18px 18px;
+    }
+}
+
 .ccm-tile {
     border: 1px solid var(--ccm-line);
     border-radius: 14px;
@@ -389,9 +439,9 @@
 }
 
 .ccm-tile:hover {
-    transform: translateY(-3px);
-    border-color: rgb(34 211 238 / 42%);
-    box-shadow: var(--ccm-glow), 0 14px 30px rgb(0 0 0 / 42%), inset 0 1px 0 rgb(255 255 255 / 7%);
+    transform: translateY(-2px);
+    border-color: rgb(255 255 255 / 22%);
+    box-shadow: 0 16px 36px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 8%);
 }
 
 .ccm-tile:hover .ccm-tile-img img {
@@ -428,15 +478,16 @@
     content: '';
     position: absolute;
     inset: auto 0 0;
-    height: 42%;
-    background: linear-gradient(180deg, transparent, rgb(5 8 14 / 78%));
+    height: 52%;
+    background: linear-gradient(180deg, transparent, rgb(4 7 12 / 45%) 55%, rgb(4 7 12 / 88%));
     pointer-events: none;
 }
 
 .ccm-tile-live {
     position: absolute;
-    left: 7px;
-    bottom: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 8px;
     z-index: 2;
     font-family: var(--ccm-mono);
     font-size: 0.62em;
@@ -519,18 +570,22 @@
     color: #facc15;
 }
 
+/* 名字压在封面底部的渐变上（画廊式），图片撑满整张卡 */
 .ccm-tile-name {
-    padding: 7px 8px 8px;
-    font-size: 0.82em;
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 1;
+    padding: 0 34px 9px 10px;
+    font-size: 0.8em;
     font-weight: 600;
-    text-align: center;
+    letter-spacing: 0.02em;
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    background: linear-gradient(180deg, rgb(10 14 22 / 30%), rgb(10 14 22 / 55%));
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgb(255 255 255 / 5%);
+    color: rgb(255 255 255 / 94%);
+    text-shadow: 0 1px 6px rgb(0 0 0 / 65%);
+    pointer-events: none;
 }
 
 .ccm-empty {
@@ -657,12 +712,59 @@
 }
 
 .ccm-detail-sec-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     padding: 8px 12px;
     font-family: var(--ccm-mono);
     font-size: 0.72em;
     letter-spacing: 0.14em;
-    opacity: 0.6;
+    opacity: 0.75;
     border-bottom: 1px solid var(--ccm-line);
+}
+
+.ccm-sec-copy {
+    cursor: pointer;
+    padding: 6px;
+    margin: -6px;
+    opacity: 0.55;
+    transition: opacity 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ccm-sec-copy:hover {
+    opacity: 1;
+    color: var(--ccm-c1);
+}
+
+.ccm-dim {
+    opacity: 0.5;
+}
+
+/* 骨架加载：等完整卡片数据时的占位微光 */
+.ccm-skel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 2px 4px;
+}
+
+.ccm-skel span {
+    height: 13px;
+    border-radius: 7px;
+    background: linear-gradient(90deg, rgb(255 255 255 / 4%) 25%, rgb(255 255 255 / 10%) 45%, rgb(255 255 255 / 4%) 65%);
+    background-size: 220% 100%;
+    animation: ccm-shimmer 1.3s ease-in-out infinite;
+}
+
+.ccm-skel span:nth-child(2) { width: 82%; }
+.ccm-skel span:nth-child(3) { width: 91%; }
+.ccm-skel span:nth-child(4) { width: 64%; }
+
+@keyframes ccm-shimmer {
+    from { background-position: 120% 0; }
+    to { background-position: -120% 0; }
 }
 
 .ccm-detail-sec-text {
@@ -754,18 +856,12 @@
     gap: 7px;
     padding: 9px 14px 0;
     overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgb(34 211 238 / 25%) transparent;
+    scrollbar-width: none;
     overscroll-behavior: contain;
 }
 
 .ccm-quickbar::-webkit-scrollbar {
-    height: 4px;
-}
-
-.ccm-quickbar::-webkit-scrollbar-thumb {
-    background: rgb(34 211 238 / 25%);
-    border-radius: 4px;
+    display: none;
 }
 
 .ccm-qbtn {
@@ -944,6 +1040,18 @@
     opacity: 0.75;
     min-width: 56px;
     text-align: center;
+}
+
+.ccm-pginfo-jump {
+    cursor: pointer;
+    border-bottom: 1px dashed rgb(255 255 255 / 25%);
+    padding-bottom: 1px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.ccm-pginfo-jump:hover {
+    color: var(--ccm-c1);
+    border-color: rgb(34 211 238 / 45%);
 }
 
 .ccm-pgsize {
