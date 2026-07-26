@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '1.3.0';
+    const VERSION = '1.4.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -521,7 +521,7 @@
                 if (closeDetail) closeDetail();
                 toastr.success('已删除「' + esc(charName(ch)) + '」', '角色卡管理');
                 if (confirm('删除成功，需要刷新页面同步角色列表。现在刷新吗？')) location.reload();
-                else renderGrid();
+                else { renderFilters(); renderGrid(); }
             } catch (err) {
                 console.error('[角色卡管理]', err);
                 toastr.error('删除失败：' + String(err && err.message || err), '角色卡管理');
@@ -609,6 +609,11 @@
                 .on('click', (e) => { e.stopPropagation(); openDetail(ch); });
             imgWrap.append(info);
 
+            const del = $('<i class="ccm-tile-del fa-solid fa-trash"></i>')
+                .attr('title', '删除这张角色卡')
+                .on('click', (e) => { e.stopPropagation(); deleteCard(ch); });
+            imgWrap.append(del);
+
             if (selectMode) {
                 tile.addClass('ccm-selectable').toggleClass('ccm-selected', selected.has(ch.avatar));
                 imgWrap.append($('<span class="ccm-tile-check"><i class="fa-solid fa-check"></i></span>'));
@@ -650,7 +655,7 @@
             if (curPage > pages) curPage = pages;
             if (curPage < 1) curPage = 1;
             if (!list.length) {
-                grid.append($('<div class="ccm-empty">没有匹配的角色卡</div>'));
+                grid.append($('<div class="ccm-empty"><i class="fa-regular fa-folder-open"></i><span>没有匹配的角色卡</span></div>'));
             } else {
                 currentPageList().forEach((ch) => grid.append(charTile(ch)));
             }
@@ -1031,6 +1036,71 @@
             renderGrid();
         }
 
+        /* ---------------- 内置导入（自带文件选择器，支持 PNG / JSON / WEBP / CHARX / YAML） ---------------- */
+        let importBusy = false;
+        const importInput = $('<input type="file" accept=".png,.json,.webp,.charx,.yaml,.yml" multiple style="display:none">');
+        $('body').append(importInput);
+
+        async function importOneFile(file) {
+            const ext = (file.name.split('.').pop() || '').toLowerCase();
+            const fd = new FormData();
+            fd.append('avatar', file);
+            fd.append('file_type', ext);
+            // FormData 必须让浏览器自己生成带 boundary 的 Content-Type
+            const headers = Object.assign({}, ctx.getRequestHeaders());
+            delete headers['Content-Type'];
+            delete headers['content-type'];
+            const res = await fetchTimeout('/api/characters/import', {
+                method: 'POST',
+                headers,
+                body: fd,
+            }, 30000);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json().catch(() => ({}));
+            if (!data || !data.file_name) throw new Error((data && data.error) || '后端未返回文件名（格式不支持？）');
+            return data.file_name;
+        }
+
+        async function refreshCharList() {
+            const c = getCtx();
+            try {
+                if (c && typeof c.getCharacters === 'function') {
+                    await c.getCharacters();
+                    return true;
+                }
+            } catch (e) {
+                console.warn('[角色卡管理] 刷新角色列表失败', e);
+            }
+            return false;
+        }
+
+        importInput.on('change', async function () {
+            const files = Array.from(this.files || []);
+            this.value = '';
+            if (!files.length || importBusy) return;
+            importBusy = true;
+            toastr.info('开始导入 ' + files.length + ' 个文件…', '角色卡管理');
+            let ok = 0;
+            const fails = [];
+            for (const f of files) {
+                try {
+                    await importOneFile(f);
+                    ok++;
+                } catch (e) {
+                    console.error('[角色卡管理] 导入失败', f.name, e);
+                    fails.push(f.name);
+                }
+            }
+            importBusy = false;
+            if (ok) {
+                const refreshed = await refreshCharList();
+                renderFilters();
+                renderGrid();
+                toastr.success('成功导入 ' + ok + ' 张角色卡' + (refreshed ? '' : '，刷新页面后生效'), '角色卡管理');
+            }
+            if (fails.length) toastr.error('导入失败：' + esc(fails.join('、')), '角色卡管理');
+        });
+
         /* ---------------- 快捷操作栏（原版没有但常用） ---------------- */
         function renderQuickbar() {
             const bar = $('#ccm_quickbar');
@@ -1040,12 +1110,9 @@
                 .attr('title', title)
                 .append($('<i class="fa-solid ' + icon + '"></i>'), $('<span></span>').text(label))
                 .on('click', fn).appendTo(bar);
-            mk('fa-file-import', '导入', '导入角色卡 PNG / JSON 文件（调用酒馆原生导入）', () => {
-                const btn = $('#character_import_button');
-                const file = $('#character_import_file');
-                if (btn.length) btn.trigger('click');
-                else if (file.length) file.trigger('click');
-                else toastr.warning('未找到酒馆的导入入口（版本差异）', '角色卡管理');
+            mk('fa-file-import', '导入', '导入角色卡文件（PNG / JSON / WEBP / CHARX，可多选）', () => {
+                if (importBusy) { toastr.info('正在导入中，请稍候…', '角色卡管理'); return; }
+                importInput.trigger('click');
             });
             mk('fa-link', 'URL导入', '从链接导入角色卡（Chub 等分享链接）', () => {
                 const b = $('#external_import_button');
