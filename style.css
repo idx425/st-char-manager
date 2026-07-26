@@ -213,6 +213,16 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+    /* 窄屏时标题可收缩截断，不许把右侧刷新/关闭按钮挤出屏幕 */
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.ccm-head-tools,
+.ccm-modal-head .ccm-modal-close {
+    flex-shrink: 0;
 }
 
 .ccm-modal-head .ccm-sys-ver {
@@ -236,6 +246,7 @@
     font-size: 0.95em;
     opacity: 0.5;
     letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
 .ccm-head-btn,
@@ -619,6 +630,40 @@
     border-radius: 4px;
 }
 
+/* ---- 触屏与三端细节 ---- */
+
+.ccm-tile,
+.ccm-fchip,
+.ccm-tchip,
+.ccm-btn,
+.ccm-tile-star,
+.ccm-tile-info,
+.ccm-head-btn,
+.ccm-modal-close {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.ccm-tile,
+.ccm-tile-name,
+.ccm-fchip,
+.ccm-tchip {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* 弹窗内滚动不穿透到底下的酒馆页面 */
+.ccm-overlay {
+    overscroll-behavior: contain;
+}
+
+.ccm-grid,
+.ccm-tagbar,
+.ccm-detail-body,
+.ccm-detail-sec-text {
+    overscroll-behavior: contain;
+}
+
 /* ---- 触屏加大点击区域 ---- */
 
 @media (pointer: coarse) {
@@ -641,6 +686,12 @@
 }
 
 /* ---- 手机窄屏微调 ---- */
+
+@media (max-width: 360px) {
+    .ccm-modal-head .ccm-sys-ver {
+        display: none;
+    }
+}
 
 @media (max-width: 480px) {
     .ccm-overlay {

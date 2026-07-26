@@ -9,8 +9,12 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
     const REPO_PATH = 'idx425/st-char-manager';
+
+    // toastr 消息会按 HTML 渲染，拼接角色名/标签名前必须转义，防注入
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     function getCtx() {
         try {
@@ -100,7 +104,7 @@
             const c = getCtx();
             const idx = c.characters.findIndex((x) => x && x.avatar === ch.avatar);
             if (idx < 0) {
-                toastr.error('角色列表里找不到「' + charName(ch) + '」，试试点右上角刷新', '角色卡管理');
+                toastr.error('角色列表里找不到「' + esc(charName(ch)) + '」，试试点右上角刷新', '角色卡管理');
                 return false;
             }
             try {
@@ -113,7 +117,7 @@
                     el.trigger('click');
                 }
                 recordRecent(ch.avatar);
-                toastr.success('已切换到「' + charName(ch) + '」', '角色卡管理');
+                toastr.success('已切换到「' + esc(charName(ch)) + '」', '角色卡管理');
                 return true;
             } catch (err) {
                 console.error('[角色卡管理]', err);
@@ -299,6 +303,7 @@
         /* ---------------- 通用弹窗（拦截冒泡，防止酒馆误关扩展面板） ---------------- */
         function makeOverlay(id, boxHtml) {
             $('#' + id).remove();
+            $(document).off('keydown.' + id);
             const overlay = $(`<div id="${id}" class="ccm-overlay"></div>`).append(boxHtml);
             $('body').append(overlay);
             const close = () => { overlay.remove(); $(document).off('keydown.' + id); };
@@ -416,11 +421,15 @@
             document.body.appendChild(a);
             a.click();
             a.remove();
-            toastr.success('已开始下载「' + charName(ch) + '」的角色卡 PNG', '角色卡管理');
+            toastr.success('已开始下载「' + esc(charName(ch)) + '」的角色卡 PNG', '角色卡管理');
         }
 
+        let cardOpBusy = false;
+
         async function duplicateCard(ch) {
+            if (cardOpBusy) return;
             if (!confirm('创建「' + charName(ch) + '」的副本？')) return;
+            cardOpBusy = true;
             try {
                 const res = await fetchTimeout('/api/characters/duplicate', {
                     method: 'POST',
@@ -433,13 +442,17 @@
             } catch (err) {
                 console.error('[角色卡管理]', err);
                 toastr.error('复制失败：' + String(err && err.message || err), '角色卡管理');
+            } finally {
+                cardOpBusy = false;
             }
         }
 
         async function deleteCard(ch, closeDetail) {
+            if (cardOpBusy) return;
             if (!confirm('确定删除角色卡「' + charName(ch) + '」？此操作不可恢复！')) return;
             const delChats = confirm('是否连同该角色的所有聊天记录一起删除？\n\n「确定」= 一起删除\n「取消」= 保留聊天记录');
             if (!confirm('最后确认：删除「' + charName(ch) + '」' + (delChats ? '及其全部聊天记录' : '（保留聊天记录）') + '？')) return;
+            cardOpBusy = true;
             try {
                 const res = await fetchTimeout('/api/characters/delete', {
                     method: 'POST',
@@ -452,12 +465,14 @@
                 settings.recent = settings.recent.filter((a) => a !== ch.avatar);
                 save();
                 if (closeDetail) closeDetail();
-                toastr.success('已删除「' + charName(ch) + '」', '角色卡管理');
+                toastr.success('已删除「' + esc(charName(ch)) + '」', '角色卡管理');
                 if (confirm('删除成功，需要刷新页面同步角色列表。现在刷新吗？')) location.reload();
                 else renderGrid();
             } catch (err) {
                 console.error('[角色卡管理]', err);
                 toastr.error('删除失败：' + String(err && err.message || err), '角色卡管理');
+            } finally {
+                cardOpBusy = false;
             }
         }
 
@@ -511,7 +526,7 @@
             const tile = $('<div class="ccm-tile" tabindex="0"></div>').toggleClass('ccm-active', active);
 
             const imgWrap = $('<div class="ccm-tile-img"></div>');
-            const img = $('<img loading="lazy" alt="">').attr('src', avatarUrl(ch));
+            const img = $('<img loading="lazy" alt="" draggable="false">').attr('src', avatarUrl(ch));
             img.on('error', function () {
                 if ($(this).data('fb')) return;
                 $(this).data('fb', 1).attr('src', '/characters/' + encodeURIComponent(ch.avatar));
@@ -541,13 +556,15 @@
                 closeManager();
                 await switchToChar(ch);
             });
-            tile.on('keydown', (e) => { if (e.key === 'Enter') tile.trigger('click'); });
+            tile.on('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tile.trigger('click'); } });
             return tile;
         }
 
         function renderGrid() {
             const grid = $('#ccm_grid');
             if (!grid.length) return;
+            // 全量重绘前记住滚动位置，否则点星标收藏会把列表弹回顶部
+            const keepScroll = grid.scrollTop();
             grid.empty();
             const list = filteredChars();
             $('#ccm_count').text(list.length + ' / ' + chars().filter(Boolean).length);
@@ -556,6 +573,7 @@
                 return;
             }
             list.forEach((ch) => grid.append(charTile(ch)));
+            grid.scrollTop(keepScroll);
         }
 
         function renderFilters() {
@@ -583,6 +601,8 @@
 
             const tagBox = $('#ccm_tagbar').empty();
             const tags = allTags();
+            // 选中的标签在酒馆里被删除后，筛选状态会残留成"看不见的过滤器"，主动清掉
+            if (filterTag && !tags.some((t) => t.id === filterTag)) filterTag = null;
             if (!tags.length) { tagBox.hide(); return; }
             tagBox.show();
             for (const t of tags) {
@@ -614,9 +634,15 @@
                   <div id="ccm_grid" class="ccm-grid"></div>
                 </div>`);
             makeOverlay('ccm_manager_modal', box);
+            let searchTimer = null;
             $('#ccm_search').val(searchText).on('input', function () {
                 searchText = this.value;
-                renderGrid();
+                // 防抖：角色多时每个按键都全量重绘会卡，尤其在手机上
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    renderGrid();
+                    $('#ccm_grid').scrollTop(0);
+                }, 160);
             });
             $('#ccm_refresh').on('click', () => {
                 renderFilters();
@@ -661,14 +687,14 @@
                         const name = String(value || '').trim();
                         if (!name) {
                             const names = chars().filter(Boolean).map(charName).join('、') || '（空）';
-                            toastr.info(names, '全部角色');
+                            toastr.info(esc(names), '全部角色');
                             return names;
                         }
                         const q = name.toLowerCase();
                         const list = chars().filter(Boolean);
                         const hit = list.find((ch) => charName(ch).toLowerCase() === q)
                             || list.find((ch) => charName(ch).toLowerCase().includes(q));
-                        if (!hit) { toastr.warning('没有找到角色：' + name); return ''; }
+                        if (!hit) { toastr.warning('没有找到角色：' + esc(name)); return ''; }
                         await switchToChar(hit);
                         return charName(hit);
                     },
