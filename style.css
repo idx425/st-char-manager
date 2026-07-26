@@ -631,39 +631,122 @@
 }
 
 
-/* ---- 原生面板注入按钮 ---- */
+/* ---- 原生面板嵌入接管 ---- */
 
-#ccm_native_btn {
+.ccm-native-takeover > *:not(#ccm_embed) {
+    display: none !important;
+}
+
+/* 面板是 flex 布局时，嵌入内容的不换行行（快捷栏等）会把 min-content 宽度
+   撑得比面板还宽，导致网格溢出被裁 —— 必须显式放开收缩 */
+.ccm-native-takeover {
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+#ccm_embed {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    height: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.ccm-embed-head {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 8px;
-    margin: 7px 8px;
-    padding: 10px 12px;
-    border: 1px solid rgb(34 211 238 / 38%);
-    border-radius: 11px;
-    background: linear-gradient(120deg, rgb(34 211 238 / 11%), rgb(129 140 248 / 11%));
+    padding: 10px 14px 0;
+    font-weight: 700;
+    font-size: 0.9em;
+    letter-spacing: 0.06em;
+}
+
+.ccm-embed-head .ccm-head-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.ccm-embed-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ccm-embed-title > i.fa-solid {
+    background: linear-gradient(120deg, var(--ccm-c1), var(--ccm-c2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* ---- 快捷操作栏 ---- */
+
+.ccm-quickbar {
+    display: flex;
+    gap: 7px;
+    padding: 9px 14px 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(34 211 238 / 25%) transparent;
+    overscroll-behavior: contain;
+}
+
+.ccm-quickbar::-webkit-scrollbar {
+    height: 4px;
+}
+
+.ccm-quickbar::-webkit-scrollbar-thumb {
+    background: rgb(34 211 238 / 25%);
+    border-radius: 4px;
+}
+
+.ccm-qbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ccm-line-hi);
+    border-radius: 10px;
+    background: var(--ccm-glass);
+    color: inherit;
+    font-size: 0.8em;
+    padding: 6px 11px;
     cursor: pointer;
-    font-weight: 600;
-    font-size: 0.92em;
-    transition: box-shadow 0.2s, transform 0.14s cubic-bezier(0.22, 0.8, 0.3, 1), border-color 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, box-shadow 0.2s;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
-#ccm_native_btn:hover {
-    border-color: rgb(34 211 238 / 60%);
-    box-shadow: 0 0 18px rgb(34 211 238 / 18%);
+.ccm-qbtn i {
+    color: var(--ccm-c1);
+    font-size: 0.95em;
 }
 
-#ccm_native_btn:active {
-    transform: scale(0.98);
+.ccm-qbtn:hover {
+    border-color: rgb(34 211 238 / 45%);
+    box-shadow: 0 0 12px rgb(34 211 238 / 12%);
 }
 
-#ccm_native_btn i {
-    color: #22d3ee;
+.ccm-qbtn:active {
+    transform: scale(0.95);
+}
+
+@media (pointer: coarse) {
+    .ccm-qbtn {
+        padding: 8px 13px;
+    }
 }
 
 .ccm-takeover-row {

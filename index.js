@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '1.2.0';
+    const VERSION = '1.3.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -994,29 +994,21 @@
             renderRows();
         }
 
-        function openManager() {
-            const box = $(`
-                <div class="ccm-modal-box ccm-manager-box">
-                  <div class="ccm-modal-head">
-                    <span><i class="fa-solid fa-address-book"></i> CHAR·MANAGER <span class="ccm-sys-ver">v${VERSION}</span><i class="ccm-blink">▊</i></span>
-                    <span class="ccm-head-tools">
-                      <span id="ccm_count" class="ccm-count"></span>
-                      <i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出）"></i>
-                      <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
-                      <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
-                    </span>
-                  </div>
+        function managerInnerHtml() {
+            return `
                   <input id="ccm_search" class="text_pole ccm-search" placeholder="搜索名称 / 作者 / 标签 / 描述…" autocomplete="off">
+                  <div id="ccm_quickbar" class="ccm-quickbar"></div>
                   <div id="ccm_modes" class="ccm-modes"></div>
                   <div id="ccm_folderbar" class="ccm-folderbar"></div>
                   <div id="ccm_tagbar" class="ccm-tagbar"></div>
                   <div id="ccm_grid" class="ccm-grid"></div>
                   <div id="ccm_batchbar" class="ccm-batchbar" style="display:none"></div>
-                  <div id="ccm_pager" class="ccm-pager" style="display:none"></div>
-                </div>`);
-            makeOverlay('ccm_manager_modal', box);
+                  <div id="ccm_pager" class="ccm-pager" style="display:none"></div>`;
+        }
+
+        function bindManagerControls(box) {
             let searchTimer = null;
-            $('#ccm_search').val(searchText).on('input', function () {
+            box.find('#ccm_search').val(searchText).on('input', function () {
                 searchText = this.value;
                 // 防抖：角色多时每个按键都全量重绘会卡，尤其在手机上
                 clearTimeout(searchTimer);
@@ -1026,49 +1018,144 @@
                     $('#ccm_grid').scrollTop(0);
                 }, 160);
             });
-            $('#ccm_batch').on('click', toggleBatchMode).toggleClass('ccm-head-on', selectMode);
-            // 打开管理器时顺带查一次更新（10 分钟内不重复）
-            if (Date.now() - lastUpdCheck > 10 * 60 * 1000) checkUpdate(true);
-            $('#ccm_refresh').on('click', () => {
+            box.find('#ccm_batch').on('click', toggleBatchMode).toggleClass('ccm-head-on', selectMode);
+            box.find('#ccm_refresh').on('click', () => {
                 renderFilters();
                 renderGrid();
                 toastr.info('列表已刷新', '角色卡管理');
             });
+            // 打开管理器时顺带查一次更新（10 分钟内不重复）
+            if (Date.now() - lastUpdCheck > 10 * 60 * 1000) checkUpdate(true);
+            renderQuickbar();
             renderFilters();
             renderGrid();
         }
 
-        /* ---------------- 原生角色面板：注入入口 + 接管 ---------------- */
-        function setupNativeEntry() {
-            const injectBtn = () => {
-                if ($('#ccm_native_btn').length) return;
-                // 优先插在原生面板搜索栏下方；不同版本兜底到面板容器顶部
-                const fixedTop = $('#charListFixedTop');
-                const block = $('#rm_characters_block');
-                if (!fixedTop.length && !block.length) return;
-                const btn = $('<div id="ccm_native_btn" tabindex="0" title="文件夹 / 分页 / 批量管理">' +
-                    '<i class="fa-solid fa-address-book"></i><span>角色卡管理器</span></div>');
-                btn.on('click', (e) => {
-                    e.stopPropagation();
-                    openManager();
-                });
-                if (fixedTop.length) fixedTop.after(btn);
-                else block.prepend(btn);
-            };
-            injectBtn();
-            setTimeout(injectBtn, 2500);
+        /* ---------------- 快捷操作栏（原版没有但常用） ---------------- */
+        function renderQuickbar() {
+            const bar = $('#ccm_quickbar');
+            if (!bar.length) return;
+            bar.empty();
+            const mk = (icon, label, title, fn) => $('<button type="button" class="ccm-qbtn"></button>')
+                .attr('title', title)
+                .append($('<i class="fa-solid ' + icon + '"></i>'), $('<span></span>').text(label))
+                .on('click', fn).appendTo(bar);
+            mk('fa-file-import', '导入', '导入角色卡 PNG / JSON 文件（调用酒馆原生导入）', () => {
+                const btn = $('#character_import_button');
+                const file = $('#character_import_file');
+                if (btn.length) btn.trigger('click');
+                else if (file.length) file.trigger('click');
+                else toastr.warning('未找到酒馆的导入入口（版本差异）', '角色卡管理');
+            });
+            mk('fa-link', 'URL导入', '从链接导入角色卡（Chub 等分享链接）', () => {
+                const b = $('#external_import_button');
+                if (b.length) b.trigger('click');
+                else toastr.warning('未找到 URL 导入入口（酒馆版本可能不支持）', '角色卡管理');
+            });
+            mk('fa-user-plus', '新建', '新建角色（进入酒馆原生创建页）', () => {
+                const b = $('#rm_button_create');
+                if (!b.length) { toastr.warning('未找到新建角色入口（版本差异）', '角色卡管理'); return; }
+                closeManager();
+                b.trigger('click');
+            });
+            mk('fa-dice', '随机', '从当前筛选结果里随机抽一张开聊', async () => {
+                const list = filteredChars();
+                if (!list.length) { toastr.warning('当前筛选没有角色卡'); return; }
+                const ch = list[Math.floor(Math.random() * list.length)];
+                closeManager();
+                await switchToChar(ch);
+            });
+            mk('fa-clock-rotate-left', '继续上次', '一键回到上一个聊过的角色', async () => {
+                const cur = curAvatar();
+                const a = settings.recent.find((av) => av !== cur && chars().some((c) => c.avatar === av));
+                const ch = a && chars().find((c) => c.avatar === a);
+                if (!ch) { toastr.warning('还没有可回去的最近角色'); return; }
+                closeManager();
+                await switchToChar(ch);
+            });
+            mk('fa-box-archive', '备份筛选', '把当前筛选结果全部导出为 PNG 角色卡', async () => {
+                const list = filteredChars();
+                if (!list.length) { toastr.warning('当前筛选没有角色卡'); return; }
+                if (!confirm('导出当前筛选的 ' + list.length + ' 张角色卡 PNG？')) return;
+                toastr.info('开始导出 ' + list.length + ' 张…', '角色卡管理');
+                for (const ch of list) { exportCard(ch, true); await sleep(350); }
+                toastr.success('已全部触发下载', '角色卡管理');
+            });
+        }
 
-            // 接管：点开酒馆右侧角色面板时，自动在其上打开管理器（可在扩展设置里关闭）
+        function openManager() {
+            // 已嵌入原生面板时不再叠一层弹窗：直接打开酒馆的角色抽屉
+            if (settings.takeover && $('#ccm_embed').length) {
+                const panel = $('#right-nav-panel');
+                if (panel.length && panel.is(':visible')) return;
+                const icon = $('#rightNavDrawerIcon, #rightNavHolder .drawer-toggle').first();
+                if (icon.length) { icon.trigger('click'); return; }
+                toastr.info('管理器已嵌入酒馆的角色面板，点右上角角色图标打开', '角色卡管理');
+                return;
+            }
+            const box = $(`
+                <div class="ccm-modal-box ccm-manager-box">
+                  <div class="ccm-modal-head">
+                    <span><i class="fa-solid fa-address-book"></i> CHAR·MANAGER <span class="ccm-sys-ver">v${VERSION}</span><i class="ccm-blink">▊</i></span>
+                    <span class="ccm-head-tools">
+                      <span id="ccm_count" class="ccm-count"></span>
+                      <i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
+                      <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
+                      <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
+                    </span>
+                  </div>
+                  ${managerInnerHtml()}
+                </div>`);
+            makeOverlay('ccm_manager_modal', box);
+            bindManagerControls(box);
+        }
+
+        /* ---------------- 原生角色面板：嵌入式接管（替换原生列表） ---------------- */
+        function mountEmbed() {
+            if (!settings.takeover) return false;
+            if ($('#ccm_embed').length) return true;
+            const host = $('#rm_characters_block');
+            if (!host.length) return false;
+            host.addClass('ccm-native-takeover');
+            const embed = $(`
+                <div id="ccm_embed" class="ccm-embed-box">
+                  <div class="ccm-embed-head">
+                    <span class="ccm-embed-title"><i class="fa-solid fa-address-book"></i> CHAR·MANAGER</span>
+                    <span class="ccm-head-tools">
+                      <span id="ccm_count" class="ccm-count"></span>
+                      <i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
+                      <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
+                      <i class="fa-solid fa-table-list ccm-head-btn" id="ccm_native_back" title="退出接管，恢复酒馆原生角色列表"></i>
+                    </span>
+                  </div>
+                  ${managerInnerHtml()}
+                </div>`);
+            host.append(embed);
+            bindManagerControls(embed);
+            embed.find('#ccm_native_back').on('click', () => {
+                settings.takeover = false;
+                save();
+                $('#ccm_takeover').prop('checked', false);
+                unmountEmbed();
+                toastr.info('已恢复原生角色列表，可在扩展设置里重新开启接管', '角色卡管理');
+            });
+            return true;
+        }
+
+        function unmountEmbed() {
+            $('#ccm_embed').remove();
+            $('#rm_characters_block').removeClass('ccm-native-takeover');
+        }
+
+        function setupNativeTakeover() {
+            mountEmbed();
+            // 酒馆某些视图延迟渲染，稍后补挂一次
+            setTimeout(mountEmbed, 2500);
+            // 每次打开角色抽屉时确保嵌入还在、数据是新的
             $(document).on('click.ccmtakeover', '#rightNavDrawerIcon, #rightNavHolder .drawer-toggle', () => {
-                if (!settings.takeover) return;
                 setTimeout(() => {
-                    const panel = $('#right-nav-panel');
-                    // 面板收起时（这次点击是在关闭面板）不打开
-                    if (panel.length && !panel.is(':visible')) return;
-                    if ($('#ccm_manager_modal').length) return;
-                    injectBtn();
-                    openManager();
-                }, 220);
+                    if (mountEmbed()) { renderFilters(); renderGrid(); }
+                }, 250);
             });
         }
 
@@ -1157,7 +1244,7 @@
               <button id="ccm_open_btn" class="menu_button ccm-btn ccm-btn-primary ccm-open-btn"><i class="fa-solid fa-address-book"></i> 打开角色卡管理器</button>
               <label class="checkbox_label ccm-takeover-row" for="ccm_takeover">
                 <input id="ccm_takeover" type="checkbox">
-                <span>接管原生角色面板（点开酒馆角色列表时自动进入管理器）</span>
+                <span>接管原生角色面板（直接替换酒馆自带的角色列表界面）</span>
               </label>
               <small class="ccm-note">快捷入口：输入框旁魔棒菜单 → 角色卡管理，或命令 /charman；按名称切换：/charswitch 角色名。文件夹、收藏与最近记录都存于本机酒馆设置中，不修改角色卡文件。</small>
             </div>
@@ -1176,10 +1263,16 @@
         $('#ccm_takeover').prop('checked', settings.takeover).on('change', function () {
             settings.takeover = this.checked;
             save();
-            toastr.info(this.checked ? '已开启：点开角色面板会自动进入管理器' : '已关闭接管，可从魔棒菜单或此处打开', '角色卡管理');
+            if (this.checked) {
+                const ok = mountEmbed();
+                toastr.info(ok ? '已接管：酒馆的角色列表界面已替换为管理器' : '已开启，打开角色面板时自动生效', '角色卡管理');
+            } else {
+                unmountEmbed();
+                toastr.info('已恢复原生角色列表，可从魔棒菜单打开管理器弹窗', '角色卡管理');
+            }
         });
 
-        setupNativeEntry();
+        setupNativeTakeover();
         setupWandMenu();
         setupSlashCommand();
         setupRecentTracking();
