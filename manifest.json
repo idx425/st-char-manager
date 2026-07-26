@@ -1,0 +1,11 @@
+{
+    "display_name": "角色卡管理 (Char Manager)",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "ysnbysnb",
+    "version": "1.0.0",
+    "homePage": "https://github.com/idx425/st-char-manager"
+}
