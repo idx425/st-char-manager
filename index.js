@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '1.4.0';
+    const VERSION = '1.5.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -46,6 +46,7 @@
         if (!settings.cardFolder || typeof settings.cardFolder !== 'object') settings.cardFolder = {};
         if (![10, 20, 50].includes(settings.pageSize)) settings.pageSize = 20;
         if (typeof settings.takeover !== 'boolean') settings.takeover = true;
+        if (!['chat', 'detail'].includes(settings.tapAction)) settings.tapAction = 'chat';
         const save = () => ctx.saveSettingsDebounced();
 
         /* ---------------- 数据读取（每次都取最新 context，避免快照过期） ---------------- */
@@ -73,7 +74,13 @@
         const lastChatTs = (ch) => Number(ch.date_last_chat || 0);
         const addedTs = (ch) => Number(ch.date_added || 0);
 
+        // 卡面直接用原图：缩略图接口默认只出 96x144 的小图，放到大卡面上会糊。
+        // 酒馆是本机服务，加载原图没有网络开销；懒加载保证只加载可见的
         function avatarUrl(ch) {
+            return '/characters/' + encodeURIComponent(ch.avatar);
+        }
+
+        function thumbUrl(ch) {
             const c = getCtx();
             try {
                 if (c && typeof c.getThumbnailUrl === 'function') return c.getThumbnailUrl('avatar', ch.avatar);
@@ -215,8 +222,9 @@
         }
 
         async function checkRemoteManifest() {
+            // raw 带时间戳参数绕过中间缓存，保证分钟级新鲜；CDN 兜底给国内直连用
             const urls = [
-                `https://raw.githubusercontent.com/${REPO_PATH}/main/manifest.json`,
+                `https://raw.githubusercontent.com/${REPO_PATH}/main/manifest.json?ccm=` + Date.now(),
                 `https://cdn.jsdelivr.net/gh/${REPO_PATH}@main/manifest.json`,
                 `https://fastly.jsdelivr.net/gh/${REPO_PATH}@main/manifest.json`,
             ];
@@ -393,7 +401,8 @@
 
             const img = box.find('.ccm-detail-avatar');
             img.attr('src', avatarUrl(ch)).on('error', function () {
-                $(this).attr('src', '/characters/' + encodeURIComponent(ch.avatar));
+                if ($(this).data('fb')) return;
+                $(this).data('fb', 1).attr('src', thumbUrl(ch));
             });
             box.find('.ccm-detail-name').text(charName(ch));
             const subParts = [];
@@ -514,6 +523,7 @@
                 }, 20000);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 deletedAvatars.add(ch.avatar);
+                selected.delete(ch.avatar);
                 settings.favs = settings.favs.filter((a) => a !== ch.avatar);
                 settings.recent = settings.recent.filter((a) => a !== ch.avatar);
                 delete settings.cardFolder[ch.avatar];
@@ -586,10 +596,10 @@
             const tile = $('<div class="ccm-tile" tabindex="0"></div>').toggleClass('ccm-active', active);
 
             const imgWrap = $('<div class="ccm-tile-img"></div>');
-            const img = $('<img loading="lazy" alt="" draggable="false">').attr('src', avatarUrl(ch));
+            const img = $('<img loading="lazy" decoding="async" alt="" draggable="false">').attr('src', avatarUrl(ch));
             img.on('error', function () {
                 if ($(this).data('fb')) return;
-                $(this).data('fb', 1).attr('src', '/characters/' + encodeURIComponent(ch.avatar));
+                $(this).data('fb', 1).attr('src', thumbUrl(ch));
             });
             imgWrap.append(img);
             if (active) imgWrap.append($('<span class="ccm-tile-live">当前</span>'));
@@ -630,6 +640,8 @@
                     renderBatchBar();
                     return;
                 }
+                // 防误触模式：点卡面先看详情，从详情里点「开始聊天」
+                if (settings.tapAction === 'detail') { openDetail(ch); return; }
                 closeManager();
                 await switchToChar(ch);
             });
@@ -1313,6 +1325,10 @@
                 <input id="ccm_takeover" type="checkbox">
                 <span>接管原生角色面板（直接替换酒馆自带的角色列表界面）</span>
               </label>
+              <label class="checkbox_label ccm-takeover-row" for="ccm_tapchat">
+                <input id="ccm_tapchat" type="checkbox">
+                <span>点击卡片直接开始聊天（关闭后点卡片先看详情，防误触）</span>
+              </label>
               <small class="ccm-note">快捷入口：输入框旁魔棒菜单 → 角色卡管理，或命令 /charman；按名称切换：/charswitch 角色名。文件夹、收藏与最近记录都存于本机酒馆设置中，不修改角色卡文件。</small>
             </div>
           </div>
@@ -1339,15 +1355,33 @@
             }
         });
 
+        $('#ccm_tapchat').prop('checked', settings.tapAction === 'chat').on('change', function () {
+            settings.tapAction = this.checked ? 'chat' : 'detail';
+            save();
+            toastr.info(this.checked
+                ? '点卡片将直接开始聊天'
+                : '已开启防误触：点卡片先看详情，从详情里开聊', '角色卡管理');
+        });
+
         setupNativeTakeover();
         setupWandMenu();
         setupSlashCommand();
         setupRecentTracking();
         setTimeout(() => checkUpdate(true), 3000);
-        // 周期性自动检测更新：酒馆长时间开着也能收到新版本弹窗提醒（每次会话最多提醒一次）
-        setInterval(() => {
-            if (updState === 'idle' || updState === 'latest') checkUpdate(true);
-        }, 45 * 60 * 1000);
+        // 每分钟轻量轮询远端版本号（只拉 1KB 的 manifest 比对，不走后端 git），
+        // 一发现新版本立即弹通知 + 点亮更新按钮
+        async function quietRemotePoll() {
+            if (updState === 'checking' || updState === 'updating' ||
+                updState === 'available' || updState === 'updated') return;
+            try {
+                const remoteVer = await checkRemoteManifest();
+                if (remoteVer && cmpVer(remoteVer, VERSION) > 0) {
+                    setUpdateState('available');
+                    notifyUpdate(remoteVer, false);
+                }
+            } catch { /* 网络波动，下一轮再试 */ }
+        }
+        setInterval(quietRemotePoll, 60 * 1000);
 
         console.log('[角色卡管理] v' + VERSION + ' 已加载');
     });

@@ -452,14 +452,14 @@
 .ccm-tile-star,
 .ccm-tile-info {
     position: absolute;
-    top: 6px;
+    top: 5px;
     z-index: 2;
-    padding: 7px;
+    padding: 9px;
     border-radius: 999px;
-    background: rgb(8 12 20 / 62%);
+    background: rgb(8 12 20 / 68%);
     border: 1px solid var(--ccm-line);
-    font-size: 0.82em;
-    opacity: 0.85;
+    font-size: 0.95em;
+    opacity: 0.88;
     cursor: pointer;
     transition: transform 0.14s var(--ccm-ease), color 0.15s, border-color 0.15s;
 }
@@ -486,15 +486,15 @@
 
 .ccm-tile-del {
     position: absolute;
-    right: 6px;
-    bottom: 7px;
+    right: 5px;
+    bottom: 6px;
     z-index: 2;
-    padding: 7px;
+    padding: 9px;
     border-radius: 999px;
-    background: rgb(8 12 20 / 62%);
+    background: rgb(8 12 20 / 68%);
     border: 1px solid var(--ccm-line);
-    font-size: 0.78em;
-    opacity: 0.7;
+    font-size: 0.88em;
+    opacity: 0.75;
     cursor: pointer;
     transition: transform 0.14s var(--ccm-ease), color 0.15s, border-color 0.15s, opacity 0.15s;
 }
@@ -1168,12 +1168,12 @@
     .ccm-tile-star,
     .ccm-tile-info,
     .ccm-tile-del {
-        padding: 9px;
-        font-size: 0.92em;
+        padding: 12px;
+        font-size: 1.02em;
     }
 
     .ccm-tile-del {
-        opacity: 0.8;
+        opacity: 0.85;
     }
 
     .ccm-head-btn,
