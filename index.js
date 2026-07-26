@@ -9,8 +9,11 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '1.0.1';
+    const VERSION = '1.1.0';
     const REPO_PATH = 'idx425/st-char-manager';
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
     // toastr 消息会按 HTML 渲染，拼接角色名/标签名前必须转义，防注入
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -39,6 +42,9 @@
         if (!Array.isArray(settings.favs)) settings.favs = [];
         if (!Array.isArray(settings.recent)) settings.recent = [];
         if (!['recent', 'name', 'added'].includes(settings.sort)) settings.sort = 'recent';
+        if (!Array.isArray(settings.folders)) settings.folders = [];
+        if (!settings.cardFolder || typeof settings.cardFolder !== 'object') settings.cardFolder = {};
+        if (![10, 20, 50].includes(settings.pageSize)) settings.pageSize = 20;
         const save = () => ctx.saveSettingsDebounced();
 
         /* ---------------- 数据读取（每次都取最新 context，避免快照过期） ---------------- */
@@ -97,6 +103,29 @@
             if (!avatar) return;
             settings.recent = [avatar, ...settings.recent.filter((a) => a !== avatar)].slice(0, 30);
             save();
+        }
+
+        /* ---------------- 文件夹 ---------------- */
+        const folderById = (id) => settings.folders.find((f) => f.id === id) || null;
+        // 悬空的文件夹指向（文件夹已删）按未归类处理
+        const folderOf = (ch) => folderById(settings.cardFolder[ch.avatar]) ? settings.cardFolder[ch.avatar] : null;
+        const folderCount = (id) => chars().filter(Boolean).filter((ch) => folderOf(ch) === id).length;
+
+        function setCardFolder(avatar, folderId) {
+            if (folderId) settings.cardFolder[avatar] = folderId;
+            else delete settings.cardFolder[avatar];
+            save();
+        }
+
+        function createFolder(name) {
+            name = String(name || '').trim();
+            if (!name) { toastr.warning('文件夹名称不能为空'); return null; }
+            if (name.length > 30) { toastr.warning('文件夹名称太长（最多 30 字）'); return null; }
+            if (settings.folders.some((f) => f.name === name)) { toastr.warning('已存在同名文件夹'); return null; }
+            const f = { id: uid(), name };
+            settings.folders.push(f);
+            save();
+            return f;
         }
 
         /* ---------------- 核心：切换角色 ---------------- */
@@ -341,6 +370,7 @@
                         <div class="ccm-detail-name"></div>
                         <div class="ccm-detail-sub"></div>
                         <div class="ccm-detail-tags"></div>
+                        <div class="ccm-detail-folderrow"></div>
                         <div class="ccm-detail-stats"></div>
                       </div>
                     </div>
@@ -374,6 +404,25 @@
             } else {
                 tagBox.hide();
             }
+
+            const folderRow = box.find('.ccm-detail-folderrow');
+            const renderDetailFolder = () => {
+                folderRow.empty();
+                const curF = folderOf(ch);
+                const mk = (label, id, icon) => $('<button type="button" class="ccm-fdchip ccm-fdchip-sm"></button>')
+                    .append($('<i class="fa-solid ' + icon + '"></i>'), $('<span></span>').text(label))
+                    .toggleClass('ccm-fdchip-on', curF === id)
+                    .on('click', () => {
+                        setCardFolder(ch.avatar, curF === id ? null : id);
+                        renderDetailFolder();
+                        renderFolders();
+                        renderGrid();
+                    })
+                    .appendTo(folderRow);
+                mk('未归类', null, 'fa-inbox');
+                settings.folders.forEach((f) => mk(f.name, f.id, 'fa-folder'));
+            };
+            renderDetailFolder();
 
             const desc = charDesc(ch), first = charFirstMes(ch);
             box.find('.ccm-detail-stats').text(`描述 ${desc.length} 字 · 开场白 ${first.length} 字`);
@@ -413,7 +462,7 @@
         }
 
         /* ---------------- 卡片操作：导出 / 复制 / 删除 ---------------- */
-        function exportCard(ch) {
+        function exportCard(ch, silent) {
             // /characters/<file> 就是含完整嵌入数据的 PNG 角色卡，直接下载即可导入任何酒馆
             const a = document.createElement('a');
             a.href = '/characters/' + encodeURIComponent(ch.avatar);
@@ -421,7 +470,7 @@
             document.body.appendChild(a);
             a.click();
             a.remove();
-            toastr.success('已开始下载「' + esc(charName(ch)) + '」的角色卡 PNG', '角色卡管理');
+            if (!silent) toastr.success('已开始下载「' + esc(charName(ch)) + '」的角色卡 PNG', '角色卡管理');
         }
 
         let cardOpBusy = false;
@@ -479,7 +528,11 @@
         /* ---------------- 管理器主界面 ---------------- */
         let filterMode = 'all';   // all | fav | recent
         let filterTag = null;     // tag id
+        let filterFolder = null;  // 文件夹 id | '__none__'(未归类) | null(不过滤)
         let searchText = '';
+        let curPage = 1;
+        let selectMode = false;
+        const selected = new Set();
 
         function closeManager() {
             $('#ccm_manager_modal').remove();
@@ -498,6 +551,8 @@
                 list = list.filter((ch) => order.includes(ch.avatar));
                 list.sort((a, b) => order.indexOf(a.avatar) - order.indexOf(b.avatar));
             }
+            if (filterFolder === '__none__') list = list.filter((ch) => !folderOf(ch));
+            else if (filterFolder) list = list.filter((ch) => folderOf(ch) === filterFolder);
             if (filterTag) {
                 list = list.filter((ch) => charTags(ch).some((t) => t.id === filterTag));
             }
@@ -549,15 +604,33 @@
                 .on('click', (e) => { e.stopPropagation(); openDetail(ch); });
             imgWrap.append(info);
 
+            if (selectMode) {
+                tile.addClass('ccm-selectable').toggleClass('ccm-selected', selected.has(ch.avatar));
+                imgWrap.append($('<span class="ccm-tile-check"><i class="fa-solid fa-check"></i></span>'));
+            }
+
             const nameBar = $('<div class="ccm-tile-name"></div>').text(charName(ch));
             tile.append(imgWrap, nameBar);
 
             tile.on('click', async () => {
+                if (selectMode) {
+                    if (selected.has(ch.avatar)) selected.delete(ch.avatar);
+                    else selected.add(ch.avatar);
+                    tile.toggleClass('ccm-selected', selected.has(ch.avatar));
+                    renderBatchBar();
+                    return;
+                }
                 closeManager();
                 await switchToChar(ch);
             });
             tile.on('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tile.trigger('click'); } });
             return tile;
+        }
+
+        function currentPageList() {
+            const list = filteredChars();
+            const size = settings.pageSize;
+            return list.slice((curPage - 1) * size, curPage * size);
         }
 
         function renderGrid() {
@@ -568,12 +641,47 @@
             grid.empty();
             const list = filteredChars();
             $('#ccm_count').text(list.length + ' / ' + chars().filter(Boolean).length);
+            const pages = Math.max(1, Math.ceil(list.length / settings.pageSize));
+            if (curPage > pages) curPage = pages;
+            if (curPage < 1) curPage = 1;
             if (!list.length) {
                 grid.append($('<div class="ccm-empty">没有匹配的角色卡</div>'));
-                return;
+            } else {
+                currentPageList().forEach((ch) => grid.append(charTile(ch)));
             }
-            list.forEach((ch) => grid.append(charTile(ch)));
+            renderPager(pages, list.length);
+            renderBatchBar();
             grid.scrollTop(keepScroll);
+        }
+
+        function renderPager(pages, count) {
+            const bar = $('#ccm_pager');
+            if (!bar.length) return;
+            bar.empty();
+            if (!count || (pages <= 1 && count <= 10)) { bar.hide(); return; }
+            bar.show();
+            const go = (p) => {
+                curPage = Math.min(Math.max(1, p), pages);
+                renderGrid();
+                $('#ccm_grid').scrollTop(0);
+            };
+            const mk = (icon, p, dis) => $('<button type="button" class="ccm-pgbtn"><i class="fa-solid ' + icon + '"></i></button>')
+                .prop('disabled', dis).on('click', () => go(p));
+            bar.append(mk('fa-angles-left', 1, curPage <= 1));
+            bar.append(mk('fa-angle-left', curPage - 1, curPage <= 1));
+            bar.append($('<span class="ccm-pginfo"></span>').text(curPage + ' / ' + pages));
+            bar.append(mk('fa-angle-right', curPage + 1, curPage >= pages));
+            bar.append(mk('fa-angles-right', pages, curPage >= pages));
+            $('<button type="button" class="ccm-pgbtn ccm-pgsize"></button>').text(settings.pageSize + '/页')
+                .attr('title', '切换每页数量（10/20/50）')
+                .on('click', () => {
+                    const opts = [10, 20, 50];
+                    settings.pageSize = opts[(opts.indexOf(settings.pageSize) + 1) % opts.length];
+                    save();
+                    curPage = 1;
+                    renderGrid();
+                    $('#ccm_grid').scrollTop(0);
+                }).appendTo(bar);
         }
 
         function renderFilters() {
@@ -586,7 +694,7 @@
             for (const m of modes) {
                 $(`<button type="button" class="ccm-fchip"><i class="fa-solid ${m.icon}"></i> ${m.label}</button>`)
                     .toggleClass('ccm-fchip-on', filterMode === m.key)
-                    .on('click', () => { filterMode = m.key; renderFilters(); renderGrid(); })
+                    .on('click', () => { filterMode = m.key; curPage = 1; renderFilters(); renderGrid(); })
                     .appendTo(modeBox);
             }
             $(`<button type="button" class="ccm-fchip ccm-fchip-sort" title="点击切换排序方式"><i class="fa-solid fa-arrow-down-wide-short"></i> ${sortLabel()}</button>`)
@@ -594,10 +702,13 @@
                     const order = ['recent', 'name', 'added'];
                     settings.sort = order[(order.indexOf(settings.sort) + 1) % order.length];
                     save();
+                    curPage = 1;
                     renderFilters();
                     renderGrid();
                 })
                 .appendTo(modeBox);
+
+            renderFolders();
 
             const tagBox = $('#ccm_tagbar').empty();
             const tags = allTags();
@@ -610,11 +721,229 @@
                     .toggleClass('ccm-tchip-on', filterTag === t.id)
                     .on('click', () => {
                         filterTag = (filterTag === t.id) ? null : t.id;
+                        curPage = 1;
                         renderFilters();
                         renderGrid();
                     })
                     .appendTo(tagBox);
             }
+        }
+
+        function renderFolders() {
+            const box = $('#ccm_folderbar');
+            if (!box.length) return;
+            box.empty();
+            if (filterFolder && filterFolder !== '__none__' && !folderById(filterFolder)) filterFolder = null;
+            const mkChip = (label, id, count, icon) => {
+                const chip = $('<button type="button" class="ccm-fdchip"></button>')
+                    .append($('<i class="fa-solid ' + icon + '"></i>'), $('<span></span>').text(label));
+                if (count !== null) chip.append($('<b class="ccm-fdcount"></b>').text(count));
+                chip.toggleClass('ccm-fdchip-on', filterFolder === id)
+                    .on('click', () => {
+                        filterFolder = (filterFolder === id) ? null : id;
+                        curPage = 1;
+                        renderFilters();
+                        renderGrid();
+                    });
+                return chip.appendTo(box);
+            };
+            if (settings.folders.length) {
+                mkChip('未归类', '__none__', folderCount(null), 'fa-inbox');
+                for (const f of settings.folders) mkChip(f.name, f.id, folderCount(f.id), 'fa-folder');
+            }
+            $('<button type="button" class="ccm-fdchip ccm-fdchip-add"><i class="fa-solid fa-folder-plus"></i><span>' +
+                (settings.folders.length ? '管理' : '新建文件夹，把卡片归类收纳') + '</span></button>')
+                .attr('title', '新建/重命名/删除文件夹')
+                .on('click', openFolderManager)
+                .appendTo(box);
+        }
+
+        /* ---------------- 批量管理 ---------------- */
+        function toggleBatchMode() {
+            selectMode = !selectMode;
+            selected.clear();
+            $('#ccm_batch').toggleClass('ccm-head-on', selectMode);
+            renderGrid();
+        }
+
+        function batchTargets() {
+            return chars().filter(Boolean).filter((ch) => selected.has(ch.avatar));
+        }
+
+        function renderBatchBar() {
+            const bar = $('#ccm_batchbar');
+            if (!bar.length) return;
+            if (!selectMode) { bar.hide(); return; }
+            bar.empty().show();
+            $('<span class="ccm-batch-count"></span>').text('已选 ' + selected.size).appendTo(bar);
+            const pageList = currentPageList();
+            const allPicked = pageList.length && pageList.every((ch) => selected.has(ch.avatar));
+            $('<button class="menu_button ccm-btn"><i class="fa-solid fa-check-double"></i> ' + (allPicked ? '取消本页' : '全选本页') + '</button>')
+                .on('click', () => {
+                    if (allPicked) pageList.forEach((ch) => selected.delete(ch.avatar));
+                    else pageList.forEach((ch) => selected.add(ch.avatar));
+                    renderGrid();
+                }).appendTo(bar);
+            $('<button class="menu_button ccm-btn"><i class="fa-solid fa-folder-open"></i> 移入文件夹</button>')
+                .on('click', () => {
+                    if (!selected.size) { toastr.warning('先点选角色卡'); return; }
+                    openFolderPick((folderId) => {
+                        batchTargets().forEach((ch) => setCardFolder(ch.avatar, folderId));
+                        const f = folderId ? folderById(folderId) : null;
+                        toastr.success('已把 ' + selected.size + ' 张卡' + (f ? '移入「' + esc(f.name) + '」' : '移出文件夹'), '角色卡管理');
+                        renderFilters();
+                        renderGrid();
+                    });
+                }).appendTo(bar);
+            $('<button class="menu_button ccm-btn"><i class="fa-solid fa-star"></i> 收藏</button>')
+                .on('click', () => {
+                    if (!selected.size) { toastr.warning('先点选角色卡'); return; }
+                    let n = 0;
+                    batchTargets().forEach((ch) => {
+                        if (!settings.favs.includes(ch.avatar)) { settings.favs.push(ch.avatar); n++; }
+                    });
+                    save();
+                    toastr.success('新增收藏 ' + n + ' 张', '角色卡管理');
+                    renderGrid();
+                }).appendTo(bar);
+            $('<button class="menu_button ccm-btn"><i class="fa-solid fa-download"></i> 导出</button>')
+                .on('click', async () => {
+                    const targets = batchTargets();
+                    if (!targets.length) { toastr.warning('先点选角色卡'); return; }
+                    toastr.info('开始导出 ' + targets.length + ' 张角色卡…', '角色卡管理');
+                    for (const ch of targets) {
+                        exportCard(ch, true);
+                        await sleep(400);
+                    }
+                    toastr.success('已全部触发下载', '角色卡管理');
+                }).appendTo(bar);
+            $('<button class="menu_button ccm-btn ccm-btn-primary"><i class="fa-solid fa-circle-check"></i> 完成</button>')
+                .on('click', toggleBatchMode).appendTo(bar);
+        }
+
+        /* ---------------- 文件夹弹窗 ---------------- */
+        function openFolderPick(onPick) {
+            const box = $(`
+                <div class="ccm-modal-box ccm-folder-box">
+                  <div class="ccm-modal-head">
+                    <span><i class="fa-solid fa-folder-open"></i> 选择文件夹<i class="ccm-blink">▊</i></span>
+                    <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
+                  </div>
+                  <div class="ccm-folder-body">
+                    <div id="ccm_pick_list"></div>
+                    <div class="ccm-folder-new">
+                      <input class="text_pole" id="ccm_pick_new" placeholder="或新建文件夹…" autocomplete="off">
+                      <button class="menu_button ccm-btn" id="ccm_pick_create"><i class="fa-solid fa-plus"></i> 新建并选择</button>
+                    </div>
+                  </div>
+                </div>`);
+            const { close } = makeOverlay('ccm_pick_modal', box);
+            const list = box.find('#ccm_pick_list');
+            const addRow = (label, id, icon) => $('<div class="ccm-pick-item" tabindex="0"></div>')
+                .append($('<i class="fa-solid ' + icon + '"></i>'), $('<span></span>').text(label))
+                .on('click', () => { close(); onPick(id); })
+                .appendTo(list);
+            addRow('未归类（移出文件夹）', null, 'fa-inbox');
+            settings.folders.forEach((f) => addRow(f.name, f.id, 'fa-folder'));
+            box.find('#ccm_pick_new').on('keydown', (e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') box.find('#ccm_pick_create').trigger('click');
+            });
+            box.find('#ccm_pick_create').on('click', () => {
+                const f = createFolder(box.find('#ccm_pick_new').val());
+                if (!f) return;
+                close();
+                onPick(f.id);
+            });
+        }
+
+        function openFolderManager() {
+            const box = $(`
+                <div class="ccm-modal-box ccm-folder-box">
+                  <div class="ccm-modal-head">
+                    <span><i class="fa-solid fa-folder-tree"></i> FOLDERS<i class="ccm-blink">▊</i></span>
+                    <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
+                  </div>
+                  <div class="ccm-folder-body">
+                    <div class="ccm-folder-new">
+                      <input class="text_pole" id="ccm_newfolder" placeholder="新文件夹名称…" autocomplete="off">
+                      <button class="menu_button ccm-btn ccm-btn-primary" id="ccm_addfolder"><i class="fa-solid fa-plus"></i> 创建</button>
+                    </div>
+                    <div id="ccm_folder_list"></div>
+                    <small class="ccm-note">给卡片归类：打开角色详情选文件夹，或用右上角批量模式一次移入多张。删除文件夹不会删除角色卡。</small>
+                  </div>
+                </div>`);
+            makeOverlay('ccm_folder_modal', box);
+
+            const renderRows = () => {
+                const list = box.find('#ccm_folder_list').empty();
+                if (!settings.folders.length) {
+                    list.append($('<div class="ccm-empty">还没有文件夹，在上面创建第一个吧</div>'));
+                    return;
+                }
+                for (const f of settings.folders) {
+                    const row = $('<div class="ccm-folder-row"></div>');
+                    $('<i class="fa-solid fa-folder"></i>').appendTo(row);
+                    const nameSpan = $('<span class="ccm-folder-name"></span>').text(f.name).appendTo(row);
+                    $('<b class="ccm-fdcount"></b>').text(folderCount(f.id)).appendTo(row);
+                    $('<i class="fa-solid fa-pen ccm-folder-op" title="重命名"></i>').on('click', () => {
+                        const input = $('<input class="text_pole ccm-folder-rename">').val(f.name);
+                        nameSpan.replaceWith(input);
+                        input.trigger('focus');
+                        let done = false;
+                        const commit = () => {
+                            if (done) return;
+                            done = true;
+                            const nv = String(input.val() || '').trim();
+                            if (nv && nv !== f.name) {
+                                if (settings.folders.some((x) => x.name === nv && x.id !== f.id)) {
+                                    toastr.warning('已存在同名文件夹');
+                                } else if (nv.length > 30) {
+                                    toastr.warning('文件夹名称太长（最多 30 字）');
+                                } else {
+                                    f.name = nv;
+                                    save();
+                                }
+                            }
+                            renderRows();
+                            renderFolders();
+                        };
+                        input.on('keydown', (e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter') commit();
+                            if (e.key === 'Escape') { done = true; renderRows(); }
+                        });
+                        input.on('blur', commit);
+                    }).appendTo(row);
+                    $('<i class="fa-solid fa-trash ccm-folder-op ccm-folder-del" title="删除文件夹（角色卡不会被删除）"></i>').on('click', () => {
+                        if (!confirm('删除文件夹「' + f.name + '」？其中的角色卡会回到未归类，不会被删除。')) return;
+                        settings.folders = settings.folders.filter((x) => x.id !== f.id);
+                        for (const k of Object.keys(settings.cardFolder)) {
+                            if (settings.cardFolder[k] === f.id) delete settings.cardFolder[k];
+                        }
+                        if (filterFolder === f.id) filterFolder = null;
+                        save();
+                        renderRows();
+                        renderFolders();
+                        renderGrid();
+                    }).appendTo(row);
+                    list.append(row);
+                }
+            };
+
+            box.find('#ccm_newfolder').on('keydown', (e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') box.find('#ccm_addfolder').trigger('click');
+            });
+            box.find('#ccm_addfolder').on('click', () => {
+                const f = createFolder(box.find('#ccm_newfolder').val());
+                if (f) {
+                    box.find('#ccm_newfolder').val('');
+                    renderRows();
+                    renderFolders();
+                }
+            });
+            renderRows();
         }
 
         function openManager() {
@@ -624,14 +953,18 @@
                     <span><i class="fa-solid fa-address-book"></i> CHAR·MANAGER <span class="ccm-sys-ver">v${VERSION}</span><i class="ccm-blink">▊</i></span>
                     <span class="ccm-head-tools">
                       <span id="ccm_count" class="ccm-count"></span>
+                      <i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出）"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
                       <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
                     </span>
                   </div>
                   <input id="ccm_search" class="text_pole ccm-search" placeholder="搜索名称 / 作者 / 标签 / 描述…" autocomplete="off">
                   <div id="ccm_modes" class="ccm-modes"></div>
+                  <div id="ccm_folderbar" class="ccm-folderbar"></div>
                   <div id="ccm_tagbar" class="ccm-tagbar"></div>
                   <div id="ccm_grid" class="ccm-grid"></div>
+                  <div id="ccm_batchbar" class="ccm-batchbar" style="display:none"></div>
+                  <div id="ccm_pager" class="ccm-pager" style="display:none"></div>
                 </div>`);
             makeOverlay('ccm_manager_modal', box);
             let searchTimer = null;
@@ -640,10 +973,12 @@
                 // 防抖：角色多时每个按键都全量重绘会卡，尤其在手机上
                 clearTimeout(searchTimer);
                 searchTimer = setTimeout(() => {
+                    curPage = 1;
                     renderGrid();
                     $('#ccm_grid').scrollTop(0);
                 }, 160);
             });
+            $('#ccm_batch').on('click', toggleBatchMode).toggleClass('ccm-head-on', selectMode);
             $('#ccm_refresh').on('click', () => {
                 renderFilters();
                 renderGrid();
@@ -736,7 +1071,7 @@
                 <button id="ccm_update_btn" class="menu_button ccm-btn"><i class="fa-solid fa-satellite-dish"></i> 检查更新</button>
               </div>
               <button id="ccm_open_btn" class="menu_button ccm-btn ccm-btn-primary ccm-open-btn"><i class="fa-solid fa-address-book"></i> 打开角色卡管理器</button>
-              <small class="ccm-note">快捷入口：输入框旁魔棒菜单 → 角色卡管理，或命令 /charman；按名称切换：/charswitch 角色名。收藏与最近记录存于本机酒馆设置中。</small>
+              <small class="ccm-note">快捷入口：输入框旁魔棒菜单 → 角色卡管理，或命令 /charman；按名称切换：/charswitch 角色名。文件夹、收藏与最近记录都存于本机酒馆设置中，不修改角色卡文件。</small>
             </div>
           </div>
         </div>`;

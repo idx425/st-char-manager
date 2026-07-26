@@ -630,6 +630,309 @@
     border-radius: 4px;
 }
 
+
+/* ---- 文件夹栏 ---- */
+
+.ccm-folderbar {
+    display: flex;
+    gap: 7px;
+    padding: 9px 14px 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(34 211 238 / 25%) transparent;
+    overscroll-behavior: contain;
+}
+
+.ccm-folderbar::-webkit-scrollbar {
+    height: 4px;
+}
+
+.ccm-folderbar::-webkit-scrollbar-thumb {
+    background: rgb(34 211 238 / 25%);
+    border-radius: 4px;
+}
+
+.ccm-fdchip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--ccm-line-hi);
+    border-radius: 999px;
+    background: var(--ccm-glass);
+    color: inherit;
+    font-size: 0.82em;
+    padding: 5px 13px;
+    cursor: pointer;
+    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ccm-fdchip > i {
+    color: #e8b45a;
+    opacity: 0.9;
+}
+
+.ccm-fdchip:active {
+    transform: scale(0.95);
+}
+
+.ccm-fdchip:hover {
+    border-color: rgb(232 180 90 / 50%);
+}
+
+.ccm-fdchip-on {
+    border-color: rgb(232 180 90 / 60%);
+    background: linear-gradient(120deg, rgb(232 180 90 / 15%), rgb(129 140 248 / 10%));
+    box-shadow: 0 0 16px rgb(232 180 90 / 12%);
+}
+
+.ccm-fdchip-add {
+    border-style: dashed;
+    opacity: 0.85;
+}
+
+.ccm-fdcount {
+    font-family: var(--ccm-mono);
+    font-size: 0.78em;
+    font-weight: 400;
+    opacity: 0.6;
+    background: rgb(255 255 255 / 7%);
+    border-radius: 999px;
+    padding: 1px 8px;
+}
+
+.ccm-fdchip-sm {
+    font-size: 0.76em;
+    padding: 4px 11px;
+}
+
+/* ---- 分页栏 ---- */
+
+.ccm-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px 12px;
+    border-top: 1px solid var(--ccm-line);
+    flex-shrink: 0;
+}
+
+.ccm-pgbtn {
+    border: 1px solid var(--ccm-line-hi);
+    border-radius: 9px;
+    background: var(--ccm-glass);
+    color: inherit;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.14s var(--ccm-ease);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.ccm-pgbtn:hover:not(:disabled) {
+    border-color: rgb(34 211 238 / 45%);
+    box-shadow: var(--ccm-glow);
+}
+
+.ccm-pgbtn:active:not(:disabled) {
+    transform: scale(0.94);
+}
+
+.ccm-pgbtn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.ccm-pginfo {
+    font-family: var(--ccm-mono);
+    font-size: 0.82em;
+    letter-spacing: 0.08em;
+    opacity: 0.75;
+    min-width: 56px;
+    text-align: center;
+}
+
+.ccm-pgsize {
+    font-size: 0.76em;
+    font-family: var(--ccm-mono);
+    letter-spacing: 0.04em;
+    margin-left: 4px;
+    opacity: 0.85;
+}
+
+/* ---- 批量管理 ---- */
+
+.ccm-head-on {
+    color: var(--ccm-c1);
+    opacity: 1;
+    text-shadow: 0 0 10px rgb(34 211 238 / 55%);
+}
+
+.ccm-batchbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 14px;
+    border-top: 1px solid rgb(34 211 238 / 22%);
+    background: linear-gradient(120deg, rgb(34 211 238 / 6%), rgb(129 140 248 / 5%));
+    flex-shrink: 0;
+}
+
+.ccm-batch-count {
+    font-family: var(--ccm-mono);
+    font-size: 0.8em;
+    letter-spacing: 0.06em;
+    color: var(--ccm-c1);
+    margin-right: 3px;
+    white-space: nowrap;
+}
+
+.ccm-batchbar .ccm-btn {
+    font-size: 0.85em;
+    padding: 6px 11px;
+}
+
+.ccm-tile-check {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7em;
+    color: var(--ccm-c1);
+    background: rgb(8 12 20 / 30%);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+}
+
+.ccm-selected .ccm-tile-check {
+    opacity: 1;
+    background: rgb(34 211 238 / 16%);
+}
+
+.ccm-tile.ccm-selected {
+    border-color: rgb(34 211 238 / 75%);
+    box-shadow: 0 0 0 2px rgb(34 211 238 / 30%), var(--ccm-glow);
+}
+
+/* ---- 文件夹管理 / 选择弹窗 ---- */
+
+.ccm-folder-box {
+    width: min(460px, 100%);
+}
+
+.ccm-folder-body {
+    padding: 14px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(34 211 238 / 25%) transparent;
+    overscroll-behavior: contain;
+}
+
+.ccm-folder-new {
+    display: flex;
+    gap: 8px;
+}
+
+.ccm-folder-new .text_pole {
+    flex: 1;
+    margin: 0 !important;
+}
+
+.ccm-folder-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--ccm-line);
+    border-radius: 11px;
+    background: var(--ccm-glass);
+}
+
+.ccm-folder-row > .fa-folder {
+    color: #e8b45a;
+}
+
+.ccm-folder-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ccm-folder-rename {
+    flex: 1;
+    margin: 0 !important;
+}
+
+.ccm-folder-op {
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 7px;
+    transition: opacity 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ccm-folder-op:hover {
+    opacity: 1;
+    color: var(--ccm-c1);
+}
+
+.ccm-folder-del:hover {
+    color: #f87171;
+}
+
+.ccm-pick-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--ccm-line);
+    border-radius: 11px;
+    background: var(--ccm-glass);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ccm-pick-item:hover {
+    border-color: rgb(34 211 238 / 45%);
+    box-shadow: var(--ccm-glow);
+}
+
+.ccm-pick-item > i {
+    color: #e8b45a;
+}
+
+.ccm-detail-folderrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+@media (pointer: coarse) {
+    .ccm-fdchip,
+    .ccm-pgbtn {
+        padding: 8px 14px;
+    }
+}
+
 /* ---- 触屏与三端细节 ---- */
 
 .ccm-tile,
