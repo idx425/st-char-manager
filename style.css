@@ -1,5 +1,5 @@
 /* ============================================================
-   角色卡管理 · 强制深色玻璃 v3.1.2
+   角色卡管理 · 强制深色玻璃 v3.1.4
    设计语言：Dark Glassmorphism · 浅色主题强制可读 · 弹层居中
    与 API 快切 (st-api-switcher) 同一套视觉与定位体系
    三端适配：手机 2 列 / 平板与桌面 3 列
@@ -1383,7 +1383,7 @@
 }
 
 
-/* ==== FINAL FORCE DARK v3.1.2 HARD OVERRIDES ==== */
+/* ==== FINAL FORCE DARK v3.1.4 HARD OVERRIDES ==== */
 
 .ccm-overlay {
     position: fixed !important;
@@ -1577,7 +1577,7 @@
     }
 }
 
-/* ==== FINAL v3.1.2 FORCE DARK + CENTER ==== */
+/* ==== FINAL v3.1.4 FORCE DARK + CENTER ==== */
 
 .ccm-settings,
 .ccm-overlay,
@@ -1765,7 +1765,7 @@
     -webkit-overflow-scrolling: touch !important;
 }
 
-/* ==== FINAL DESKTOP/MOBILE v3.1.2 HARD OVERRIDES ==== */
+/* ==== FINAL DESKTOP/MOBILE v3.1.4 HARD OVERRIDES ==== */
 
 .ccm-overlay {
     position: fixed !important;
@@ -1959,7 +1959,7 @@ body .ccm-blink {
     }
 }
 
-/* ==== ULTRA FINAL v3.1.2 PHONE READABILITY ==== */
+/* ==== ULTRA FINAL v3.1.4 PHONE READABILITY ==== */
 
 @media (max-width: 700px) {
     .ccm-grid,
@@ -2000,4 +2000,119 @@ body .ccm-blink {
     background: rgb(255 255 255 / 8%) !important;
     color: #e8f0ff !important;
     -webkit-text-fill-color: #e8f0ff !important;
+}
+
+
+/* ============================================================
+   v3.1.4 TOP + DETAIL CLOSE SAFE (desktop package, shared chrome)
+   ============================================================ */
+
+html body #ccm_embed,
+html body #ccm_embed.ccm-embed-box,
+html body .ccm-manager-box {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+}
+
+html body .ccm-embed-head,
+html body .ccm-search-wrap,
+html body #ccm_quickbar,
+html body .ccm-quickbar,
+html body #ccm_modes,
+html body .ccm-modes,
+html body #ccm_folderbar,
+html body .ccm-folderbar,
+html body #ccm_tagbar,
+html body .ccm-tagbar,
+html body .ccm-modal-head,
+html body #ccm_pager,
+html body .ccm-pager,
+html body #ccm_batchbar,
+html body .ccm-batchbar {
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+html body #ccm_quickbar .ccm-qbtn,
+html body .ccm-quickbar .ccm-qbtn {
+    min-height: 40px !important;
+    padding: 10px 10px !important;
+    box-sizing: border-box !important;
+}
+
+html body #ccm_search,
+html body .ccm-search {
+    min-height: 42px !important;
+    box-sizing: border-box !important;
+}
+
+html body .ccm-overlay,
+html body #ccm_detail_modal.ccm-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 2147483000 !important;
+    box-sizing: border-box !important;
+}
+
+html body .ccm-detail-box,
+html body #ccm_detail_modal .ccm-detail-box {
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: min(88dvh, calc(100vh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
+    margin: auto !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    overflow: hidden !important;
+    background-color: #0f1522 !important;
+    color: #f3f7ff !important;
+}
+
+html body .ccm-detail-box .ccm-modal-head,
+html body #ccm_detail_modal .ccm-modal-head {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 5 !important;
+    flex: 0 0 auto !important;
+    min-height: 48px !important;
+    background: #0f1522 !important;
+}
+
+html body .ccm-modal-close,
+html body .ccm-detail-box .ccm-modal-close {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    color: #f3f7ff !important;
+    -webkit-text-fill-color: #f3f7ff !important;
+    pointer-events: auto !important;
+}
+
+html body .ccm-detail-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+}
+
+html body .ccm-detail-sec-title,
+html body .ccm-detail-sec-title *,
+html body .ccm-detail-sec-text,
+html body .ccm-detail-sec-text * {
+    color: #f3f7ff !important;
+    -webkit-text-fill-color: #f3f7ff !important;
+    opacity: 1 !important;
 }
