@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '3.0.0';
+    const VERSION = '3.1.2';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -53,7 +53,14 @@
         }
         if (typeof settings.takeover !== 'boolean') settings.takeover = true;
         if (!['chat', 'detail'].includes(settings.tapAction)) settings.tapAction = 'chat';
+        // 历史脏数据清洗：favs/recent 里可能残留已删卡的 avatar
+        if (!Array.isArray(settings.favs)) settings.favs = [];
+        if (!Array.isArray(settings.recent)) settings.recent = [];
+        settings.favs = settings.favs.filter((a) => typeof a === 'string' && a);
+        settings.recent = settings.recent.filter((a) => typeof a === 'string' && a);
         const save = () => ctx.saveSettingsDebounced();
+        // 默认值迁移只改了内存，立刻落盘，避免刷新后反复迁移
+        save();
 
         /* ---------------- 数据读取（每次都取最新 context，避免快照过期） ---------------- */
         // context 里的 characterId 是调用时的快照值，缓存旧 ctx 会读到过期的当前角色
@@ -62,7 +69,7 @@
         const chars = () => {
             const c = getCtx();
             const list = (c && Array.isArray(c.characters)) ? c.characters : [];
-            return deletedAvatars.size ? list.filter((ch) => ch && !deletedAvatars.has(ch.avatar)) : list;
+            return list.filter((ch) => ch && ch.avatar && !deletedAvatars.has(ch.avatar));
         };
         const curAvatar = () => {
             const c = getCtx();
@@ -71,7 +78,9 @@
             return ch ? ch.avatar : null;
         };
 
-        const isFav = (ch) => settings.favs.includes(ch.avatar) || !!ch.fav || !!(ch.data && ch.data.extensions && ch.data.extensions.fav);
+        // 插件收藏 + 酒馆原生 fav 都算收藏；展示与切换必须用同一套判定，否则会出现「星亮着但按钮显示未收藏 / 点一下反而再收藏」
+        const isNativeFav = (ch) => !!(ch && (ch.fav || (ch.data && (ch.data.fav || (ch.data.extensions && ch.data.extensions.fav)))));
+        const isFav = (ch) => !!(ch && ch.avatar && (settings.favs.includes(ch.avatar) || isNativeFav(ch)));
         const charName = (ch) => String(ch.name || (ch.data && ch.data.name) || '未命名');
         const charCreator = (ch) => String((ch.data && ch.data.creator) || '');
         const charVersion = (ch) => String((ch.data && ch.data.character_version) || '');
@@ -83,10 +92,12 @@
         // 卡面直接用原图：缩略图接口默认只出 96x144 的小图，放到大卡面上会糊。
         // 酒馆是本机服务，加载原图没有网络开销；懒加载保证只加载可见的
         function avatarUrl(ch) {
+            if (!ch || !ch.avatar) return '';
             return '/characters/' + encodeURIComponent(ch.avatar);
         }
 
         function thumbUrl(ch) {
+            if (!ch || !ch.avatar) return '';
             const c = getCtx();
             try {
                 if (c && typeof c.getThumbnailUrl === 'function') return c.getThumbnailUrl('avatar', ch.avatar);
@@ -142,10 +153,38 @@
             return f;
         }
 
+        function pruneSettings() {
+            const avatars = new Set(chars().map((ch) => ch.avatar));
+            let changed = false;
+            const favs = settings.favs.filter((a) => avatars.has(a));
+            if (favs.length !== settings.favs.length) { settings.favs = favs; changed = true; }
+            const recent = settings.recent.filter((a) => avatars.has(a));
+            if (recent.length !== settings.recent.length) { settings.recent = recent; changed = true; }
+            for (const k of Object.keys(settings.cardFolder)) {
+                if (!avatars.has(k) || !folderById(settings.cardFolder[k])) {
+                    delete settings.cardFolder[k];
+                    changed = true;
+                }
+            }
+            // 文件夹列表本身去空名/非法项
+            const folders = settings.folders.filter((f) => f && f.id && typeof f.name === 'string' && f.name.trim());
+            if (folders.length !== settings.folders.length) { settings.folders = folders; changed = true; }
+            if (changed) save();
+            return changed;
+        }
+
         /* ---------------- 核心：切换角色 ---------------- */
         async function switchToChar(ch) {
+            if (!ch || !ch.avatar) {
+                toastr.error('无效角色卡', '角色卡管理');
+                return false;
+            }
             const c = getCtx();
-            const idx = (c && Array.isArray(c.characters))
+            if (!c) {
+                toastr.error('酒馆 context 不可用，请刷新页面', '角色卡管理');
+                return false;
+            }
+            const idx = Array.isArray(c.characters)
                 ? c.characters.findIndex((x) => x && x.avatar === ch.avatar)
                 : -1;
             if (idx < 0) {
@@ -221,7 +260,12 @@
         }
 
         function cmpVer(a, b) {
-            const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+            const num = (x) => {
+                const n = Number(x);
+                return Number.isFinite(n) ? n : 0;
+            };
+            const pa = String(a || '0').split('.').map(num);
+            const pb = String(b || '0').split('.').map(num);
             for (let i = 0; i < 3; i++) {
                 const d = (pa[i] || 0) - (pb[i] || 0);
                 if (d) return d;
@@ -355,7 +399,25 @@
             $(document).off('keydown.' + id);
             const overlay = $(`<div id="${id}" class="ccm-overlay"></div>`).append(boxHtml);
             $('body').append(overlay);
-            const close = () => { overlay.remove(); $(document).off('keydown.' + id); };
+            // 多层弹窗共用计数锁：打开时锁 body 滚动，全部关掉后还原
+            const lockN = (Number(document.body.dataset.ccmOverlayLock) || 0) + 1;
+            document.body.dataset.ccmOverlayLock = String(lockN);
+            if (lockN === 1) {
+                document.body.dataset.ccmPrevOverflow = document.body.style.overflow || '';
+                document.body.style.overflow = 'hidden';
+            }
+            const close = () => {
+                overlay.remove();
+                $(document).off('keydown.' + id);
+                const left = Math.max(0, (Number(document.body.dataset.ccmOverlayLock) || 1) - 1);
+                if (left === 0) {
+                    document.body.style.overflow = document.body.dataset.ccmPrevOverflow || '';
+                    delete document.body.dataset.ccmPrevOverflow;
+                    delete document.body.dataset.ccmOverlayLock;
+                } else {
+                    document.body.dataset.ccmOverlayLock = String(left);
+                }
+            };
             // 弹窗挂在 body 上，点击若冒泡到 document，酒馆会判定"点击了面板外部"
             // 而关闭整个扩展设置面板 —— 全部拦截
             overlay.on('pointerdown pointerup mousedown mouseup click touchstart touchend', (e) => {
@@ -364,7 +426,11 @@
             });
             $(document).on('keydown.' + id, (e) => {
                 // 多层弹窗叠加时（详情叠在管理器上），Esc 只关最上层
-                if (e.key === 'Escape' && $('.ccm-overlay').last().attr('id') === id) close();
+                if (e.key === 'Escape' && $('.ccm-overlay').last().attr('id') === id) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    close();
+                }
             });
             overlay.find('.ccm-modal-close').on('click', close);
             return { overlay, close };
@@ -375,31 +441,40 @@
            轻量字段，description / first_mes 等正文必须单独调 /api/characters/get
            才能拿到 —— 之前详情页直接读列表快照，所以简介显示为空 */
         const fullCache = new Map();
+        const hydratePending = new Map();
 
         function isShallow(ch) {
             return !!ch.shallow || (!charDesc(ch) && !charFirstMes(ch));
         }
 
         async function hydrateChar(ch) {
+            if (!ch || !ch.avatar) return ch;
             if (!isShallow(ch)) return ch;
             if (fullCache.has(ch.avatar)) return fullCache.get(ch.avatar);
-            try {
-                const res = await fetchTimeout('/api/characters/get', {
-                    method: 'POST',
-                    headers: ctx.getRequestHeaders(),
-                    body: JSON.stringify({ avatar_url: ch.avatar }),
-                }, 10000);
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const full = await res.json();
-                if (full && (full.name || full.data)) {
-                    const merged = Object.assign({}, ch, full, { avatar: ch.avatar, shallow: false });
-                    fullCache.set(ch.avatar, merged);
-                    return merged;
+            if (hydratePending.has(ch.avatar)) return hydratePending.get(ch.avatar);
+            const job = (async () => {
+                try {
+                    const res = await fetchTimeout('/api/characters/get', {
+                        method: 'POST',
+                        headers: ctx.getRequestHeaders(),
+                        body: JSON.stringify({ avatar_url: ch.avatar }),
+                    }, 10000);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const full = await res.json();
+                    if (full && (full.name || full.data)) {
+                        const merged = Object.assign({}, ch, full, { avatar: ch.avatar, shallow: false });
+                        fullCache.set(ch.avatar, merged);
+                        return merged;
+                    }
+                } catch (e) {
+                    console.warn('[角色卡管理] 获取完整卡片数据失败', ch.avatar, e);
+                } finally {
+                    hydratePending.delete(ch.avatar);
                 }
-            } catch (e) {
-                console.warn('[角色卡管理] 获取完整卡片数据失败', ch.avatar, e);
-            }
-            return ch;
+                return ch;
+            })();
+            hydratePending.set(ch.avatar, job);
+            return job;
         }
 
         /* ---------------- 复制到剪贴板（带降级） ---------------- */
@@ -595,17 +670,40 @@
         }
 
         function updateFavBtn(btn, ch) {
-            const on = settings.favs.includes(ch.avatar);
+            const on = isFav(ch);
             btn.html(on
                 ? '<i class="fa-solid fa-star"></i> 已收藏'
                 : '<i class="fa-regular fa-star"></i> 收藏');
             btn.toggleClass('ccm-fav-on', on);
         }
 
+        function clearNativeFavFlags(ch) {
+            if (!ch) return;
+            ch.fav = false;
+            if (ch.data) {
+                ch.data.fav = false;
+                if (ch.data.extensions && typeof ch.data.extensions === 'object') {
+                    ch.data.extensions.fav = false;
+                }
+            }
+        }
+
         function toggleFav(ch) {
-            if (settings.favs.includes(ch.avatar)) {
+            if (!ch || !ch.avatar) return;
+            if (isFav(ch)) {
                 settings.favs = settings.favs.filter((a) => a !== ch.avatar);
-            } else {
+                clearNativeFavFlags(ch);
+                // 尽力把原生 fav 一并写回，失败也不影响插件内状态
+                fetchTimeout('/api/characters/merge-attributes', {
+                    method: 'POST',
+                    headers: ctx.getRequestHeaders(),
+                    body: JSON.stringify({
+                        avatar: ch.avatar,
+                        fav: false,
+                        data: { fav: false, extensions: { fav: false } },
+                    }),
+                }, 8000).catch(() => {});
+            } else if (!settings.favs.includes(ch.avatar)) {
                 settings.favs.push(ch.avatar);
             }
             save();
@@ -614,6 +712,10 @@
         /* ---------------- 卡片操作：导出 / 复制 / 删除 ---------------- */
         function exportCard(ch, silent) {
             // /characters/<file> 就是含完整嵌入数据的 PNG 角色卡，直接下载即可导入任何酒馆
+            if (!ch || !ch.avatar) {
+                if (!silent) toastr.warning('这张卡没有有效头像文件名，无法导出', '角色卡管理');
+                return;
+            }
             const a = document.createElement('a');
             a.href = '/characters/' + encodeURIComponent(ch.avatar);
             a.download = ch.avatar;
@@ -628,6 +730,9 @@
         /* 改名走 merge-attributes：深合并写回本地卡片文件（和酒馆自带 /char-update 命令同一接口），
            不改头像文件名，所以标签/文件夹/收藏/聊天绑定（都按头像文件名索引）全部保持有效 */
         async function renameCard(ch, newName) {
+            if (!ch || !ch.avatar) throw new Error('无效角色卡');
+            newName = String(newName || '').trim();
+            if (!newName) throw new Error('卡名不能为空');
             const res = await fetchTimeout('/api/characters/merge-attributes', {
                 method: 'POST',
                 headers: ctx.getRequestHeaders(),
@@ -694,6 +799,7 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 deletedAvatars.add(ch.avatar);
                 selected.delete(ch.avatar);
+                fullCache.delete(ch.avatar);
                 settings.favs = settings.favs.filter((a) => a !== ch.avatar);
                 settings.recent = settings.recent.filter((a) => a !== ch.avatar);
                 delete settings.cardFolder[ch.avatar];
@@ -720,8 +826,11 @@
         let curPage = 1;
         let selectMode = false;
         const selected = new Set();
+        let searchTimer = null;
 
         function closeManager() {
+            clearTimeout(searchTimer);
+            searchTimer = null;
             $('#ccm_manager_modal').remove();
             $(document).off('keydown.ccm_manager_modal');
         }
@@ -998,6 +1107,7 @@
                         if (!res.ok) throw new Error('HTTP ' + res.status);
                         deletedAvatars.add(ch.avatar);
                         selected.delete(ch.avatar);
+                        fullCache.delete(ch.avatar);
                         settings.favs = settings.favs.filter((a) => a !== ch.avatar);
                         settings.recent = settings.recent.filter((a) => a !== ch.avatar);
                         delete settings.cardFolder[ch.avatar];
@@ -1215,7 +1325,6 @@
         }
 
         function bindManagerControls(box) {
-            let searchTimer = null;
             const searchInput = box.find('#ccm_search');
             const searchClear = box.find('#ccm_search_clear');
             const syncClear = () => searchClear.toggleClass('ccm-show', !!searchInput.val());
@@ -1282,6 +1391,11 @@
             try {
                 if (c && typeof c.getCharacters === 'function') {
                     await c.getCharacters();
+                    // 后端列表已同步时，清掉本地删除遮罩里其实还在的项，并修剪设置里的悬空引用
+                    for (const ch of (c.characters || [])) {
+                        if (ch && ch.avatar) deletedAvatars.delete(ch.avatar);
+                    }
+                    pruneSettings();
                     return true;
                 }
             } catch (e) {
@@ -1367,6 +1481,7 @@
         }
 
         function openManager() {
+            pruneSettings();
             // 已嵌入原生面板时不再叠一层弹窗：直接打开酒馆的角色抽屉
             if (settings.takeover && $('#ccm_embed').length) {
                 const panel = $('#right-nav-panel');
@@ -1444,6 +1559,7 @@
 
         /* ---------------- 魔棒菜单入口 ---------------- */
         function setupWandMenu() {
+            $('#ccm_wand_item').off('click').remove();
             const menuItem = $(
                 '<div id="ccm_wand_item" class="list-group-item flex-container flexGap5 interactable" tabindex="0">' +
                 '<i class="fa-solid fa-address-book"></i><span>角色卡管理</span></div>'
@@ -1577,6 +1693,8 @@
         setupWandMenu();
         setupSlashCommand();
         setupRecentTracking();
+        // 角色列表可能晚于扩展初始化，稍后修剪一次悬空收藏/最近/文件夹绑定
+        setTimeout(() => { try { pruneSettings(); } catch { /* ignore */ } }, 1500);
         setTimeout(() => checkUpdate(true), 3000);
         // 每分钟轻量轮询远端版本号（只拉 1KB 的 manifest 比对，不走后端 git），
         // 一发现新版本立即弹通知 + 点亮更新按钮
