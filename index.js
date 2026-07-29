@@ -410,49 +410,52 @@
         }
 
         /* ---------------- 通用弹窗（拦截冒泡，防止酒馆误关扩展面板） ---------------- */
-        function makeOverlay(id, boxHtml) {
-            const existing = $('#' + id);
-            if (existing.length) {
-                const left = Math.max(0, (Number(document.body.dataset.ccmOverlayLock) || 1) - 1);
-                if (left === 0) {
-                    document.body.style.overflow = document.body.dataset.ccmPrevOverflow || '';
-                    delete document.body.dataset.ccmPrevOverflow;
-                    delete document.body.dataset.ccmOverlayLock;
-                } else {
-                    document.body.dataset.ccmOverlayLock = String(left);
-                }
-                existing.remove();
-            }
-            $(document).off('keydown.' + id);
-            const overlay = $(`<div id="${id}" class="ccm-overlay"></div>`).append(boxHtml);
-            $('body').append(overlay);
-            // 多层弹窗共用计数锁：打开时锁 body 滚动，全部关掉后还原
+        function lockBodyScroll() {
             const lockN = (Number(document.body.dataset.ccmOverlayLock) || 0) + 1;
             document.body.dataset.ccmOverlayLock = String(lockN);
             if (lockN === 1) {
                 document.body.dataset.ccmPrevOverflow = document.body.style.overflow || '';
                 document.body.style.overflow = 'hidden';
             }
+        }
+
+        function unlockBodyScroll() {
+            const current = Number(document.body.dataset.ccmOverlayLock) || 0;
+            if (current <= 0) return;
+            const left = Math.max(0, current - 1);
+            if (left === 0) {
+                document.body.style.overflow = document.body.dataset.ccmPrevOverflow || '';
+                delete document.body.dataset.ccmPrevOverflow;
+                delete document.body.dataset.ccmOverlayLock;
+            } else {
+                document.body.dataset.ccmOverlayLock = String(left);
+            }
+        }
+
+        function makeOverlay(id, boxHtml) {
+            const existing = $('#' + id);
+            if (existing.length) {
+                existing.remove();
+                unlockBodyScroll();
+            }
+            $(document).off('keydown.' + id);
+            const overlay = $(`<div id="${id}" class="ccm-overlay"></div>`).append(boxHtml);
+            $('body').append(overlay);
+            lockBodyScroll();
+
+            let isClosed = false;
             const close = () => {
+                if (isClosed) return;
+                isClosed = true;
                 overlay.remove();
                 $(document).off('keydown.' + id);
-                const left = Math.max(0, (Number(document.body.dataset.ccmOverlayLock) || 1) - 1);
-                if (left === 0) {
-                    document.body.style.overflow = document.body.dataset.ccmPrevOverflow || '';
-                    delete document.body.dataset.ccmPrevOverflow;
-                    delete document.body.dataset.ccmOverlayLock;
-                } else {
-                    document.body.dataset.ccmOverlayLock = String(left);
-                }
+                unlockBodyScroll();
             };
-            // 弹窗挂在 body 上，点击若冒泡到 document，酒馆会判定"点击了面板外部"
-            // 而关闭整个扩展设置面板 —— 全部拦截
             overlay.on('pointerdown pointerup mousedown mouseup click touchstart touchend', (e) => {
                 e.stopPropagation();
                 if (e.type === 'pointerdown' && e.target === overlay[0]) close();
             });
             $(document).on('keydown.' + id, (e) => {
-                // 多层弹窗叠加时（详情叠在管理器上），Esc 只关最上层
                 if (e.key === 'Escape' && $('.ccm-overlay').last().attr('id') === id) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -858,15 +861,11 @@
         function closeManager() {
             clearTimeout(searchTimer);
             searchTimer = null;
-            $('#ccm_manager_modal').remove();
-            $(document).off('keydown.ccm_manager_modal');
-            const left = Math.max(0, (Number(document.body.dataset.ccmOverlayLock) || 1) - 1);
-            if (left === 0) {
-                document.body.style.overflow = document.body.dataset.ccmPrevOverflow || '';
-                delete document.body.dataset.ccmPrevOverflow;
-                delete document.body.dataset.ccmOverlayLock;
-            } else {
-                document.body.dataset.ccmOverlayLock = String(left);
+            const modal = $('#ccm_manager_modal');
+            if (modal.length) {
+                modal.remove();
+                $(document).off('keydown.ccm_manager_modal');
+                unlockBodyScroll();
             }
         }
 
@@ -1343,18 +1342,36 @@
             renderRows();
         }
 
+                function syncSettingsUI() {
+            $('#ccm_takeover').prop('checked', !!settings.takeover);
+            $('#ccm_tapchat').prop('checked', settings.tapAction === 'chat');
+            $('#ccm_compact_setting').prop('checked', !!settings.compact);
+            $('#ccm_quick_setting').prop('checked', !!settings.quickbarCollapsed);
+            $('#ccm_theme_setting').val(settings.theme === 'light' ? 'light' : 'dark');
+
+            $('.ccm-head-btn#ccm_compact_btn').toggleClass('ccm-head-on', !!settings.compact);
+            $('.ccm-head-btn#ccm_theme_btn').toggleClass('ccm-head-on', settings.theme === 'light');
+            if (typeof syncQuickBtn === 'function') {
+                syncQuickBtn($('.ccm-head-btn#ccm_quick_btn'));
+            }
+        }
+
         function syncContainerStyles(target) {
             const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
             const el = (target && target.length) ? $(sel).add(target) : $(sel);
             el.toggleClass('ccm-compact', !!settings.compact);
             el.toggleClass('ccm-theme-light', settings.theme === 'light');
             el.toggleClass('ccm-theme-dark', settings.theme !== 'light');
+            el.toggleClass('ccm-quickbar-collapsed', !!settings.quickbarCollapsed);
+            $('#ccm_quickbar').toggleClass('ccm-quickbar-collapsed', !!settings.quickbarCollapsed);
+
             if (settings.takeover) {
                 $('body').toggleClass('ccm-theme-light', settings.theme === 'light');
                 $('body').toggleClass('ccm-theme-dark', settings.theme !== 'light');
             } else {
                 $('body').removeClass('ccm-theme-light ccm-theme-dark');
             }
+            syncSettingsUI();
         }
 
         function managerInnerHtml() {
@@ -1805,26 +1822,28 @@
                 : '已开启防误触：点卡片先看详情，从详情里开聊', '角色卡管理');
         });
 
-        $('#ccm_compact_setting').prop('checked', !!settings.compact).on('change', function () {
-            settings.compact = this.checked;
-            save();
-            syncContainerStyles();
-            $('#ccm_embed #ccm_compact_btn').toggleClass('ccm-head-on', !!settings.compact);
-            toastr.info(settings.compact ? '已开启紧凑模式' : '已恢复标准界面尺寸', '角色卡管理');
-        });
-        $('#ccm_quick_setting').prop('checked', !!settings.quickbarCollapsed).on('change', function () {
-            settings.quickbarCollapsed = this.checked;
-            save();
-            syncContainerStyles();
-            if ($('#ccm_embed').length) renderQuickbar();
-            toastr.info(settings.quickbarCollapsed ? '快捷栏已默认折叠' : '快捷栏已默认展开', '角色卡管理');
-        });
-        $('#ccm_theme_setting').val(settings.theme === 'light' ? 'light' : 'dark').on('change', function () {
-            settings.theme = this.value;
-            save();
-            syncContainerStyles();
-            toastr.info(settings.theme === 'light' ? '已切换至浅色主题' : '已切换至暗色玻璃主题', '角色卡管理');
-        });
+        $(document).off('change.ccm_settings')
+            .on('change.ccm_settings', '#ccm_compact_setting', function () {
+                settings.compact = this.checked;
+                save();
+                syncContainerStyles();
+                toastr.info(settings.compact ? '已开启紧凑模式' : '已恢复标准界面尺寸', '角色卡管理');
+            })
+            .on('change.ccm_settings', '#ccm_quick_setting', function () {
+                settings.quickbarCollapsed = this.checked;
+                save();
+                syncContainerStyles();
+                if ($('#ccm_embed').length) renderQuickbar();
+                toastr.info(settings.quickbarCollapsed ? '快捷栏已默认折叠' : '快捷栏已默认展开', '角色卡管理');
+            })
+            .on('change.ccm_settings', '#ccm_theme_setting', function () {
+                settings.theme = this.value;
+                save();
+                syncContainerStyles();
+                toastr.info(settings.theme === 'light' ? '已切换至浅色主题' : '已切换至暗色玻璃主题', '角色卡管理');
+            });
+
+        syncSettingsUI();
 
         setupNativeTakeover();
         setupWandMenu();

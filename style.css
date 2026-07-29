@@ -2379,6 +2379,7 @@ html body .ccm-theme-light .ccm-tile-name {
 }
 
 html body .ccm-theme-light .ccm-tile-fav,
+html body .ccm-theme-light .ccm-tile-star,
 html body .ccm-theme-light .ccm-tile-info,
 html body .ccm-theme-light .ccm-tile-del {
     background: rgba(255, 255, 255, 0.88) !important;
@@ -2388,6 +2389,8 @@ html body .ccm-theme-light .ccm-tile-del {
 }
 
 html body .ccm-theme-light .ccm-tile-fav.ccm-on,
+html body .ccm-theme-light .ccm-tile-star.ccm-on,
+html body .ccm-theme-light .ccm-tile-star.ccm-fav-on,
 html body .ccm-theme-light .ccm-fav-on {
     color: #f59e0b !important;
     -webkit-text-fill-color: #f59e0b !important;
@@ -2437,4 +2440,31 @@ html body .ccm-theme-light #ccm_batchbar {
     background-color: #f1f5f9 !important;
     border-top: 1px solid rgba(0, 0, 0, 0.12) !important;
     color: #0f172a !important;
+}
+
+
+/* ============================================================
+   COMPACT MODE STYLES
+   ============================================================ */
+.ccm-compact .ccm-grid,
+#ccm_embed.ccm-compact .ccm-grid,
+.ccm-compact#ccm_grid {
+    gap: 6px !important;
+}
+
+.ccm-compact .ccm-tile {
+    padding: 2px !important;
+}
+
+.ccm-compact .ccm-tile-name {
+    font-size: 0.7em !important;
+    padding: 2px 4px !important;
+}
+
+.ccm-compact .ccm-search-wrap,
+.ccm-compact .ccm-folderbar,
+.ccm-compact .ccm-tagbar {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
 }
