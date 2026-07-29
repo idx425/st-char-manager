@@ -2116,3 +2116,185 @@ html body .ccm-detail-sec-text * {
     -webkit-text-fill-color: #f3f7ff !important;
     opacity: 1 !important;
 }
+
+/* ============================================================
+   v3.2.0 LIGHT THEME, COMPACT MODE & HORIZONTAL SCROLL FIXES
+   ============================================================ */
+
+/* ---- 强制横向滑动 (Tag & Folder Bars) ---- */
+html body #ccm_folderbar,
+html body .ccm-folderbar,
+html body #ccm_tagbar,
+html body .ccm-tagbar,
+html body .ccm-detail-folderrow {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    scrollbar-width: thin !important;
+}
+
+html body .ccm-tchip,
+html body .ccm-fdchip {
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+/* 折叠快捷栏 */
+html body .ccm-quickbar-collapsed,
+html body #ccm_quickbar.ccm-quickbar-collapsed {
+    display: flex !important;
+    padding: 4px 10px !important;
+}
+
+html body .ccm-qbtn-unfold,
+html body .ccm-qbtn-fold {
+    width: 100% !important;
+    text-align: center !important;
+    opacity: 0.88 !important;
+}
+
+/* ---- 浅色明亮主题 (Light Mode) ---- */
+.ccm-theme-light,
+.ccm-theme-light .ccm-sys-bar,
+.ccm-theme-light.ccm-overlay,
+.ccm-theme-light .ccm-modal-box,
+.ccm-theme-light .ccm-embed-box,
+.ccm-theme-light#ccm_embed,
+.ccm-theme-light .ccm-detail-section,
+.ccm-theme-light .ccm-folder-row,
+.ccm-theme-light .ccm-pick-item,
+.ccm-theme-light .ccm-batchbar,
+.ccm-theme-light .ccm-quickbar,
+#ccm_embed.ccm-theme-light,
+.ccm-modal-box.ccm-theme-light {
+    --ccm-c1: #0284c7;
+    --ccm-c2: #6366f1;
+    --ccm-fg: #1e293b !important;
+    --ccm-fg-strong: #0f172a !important;
+    --ccm-fg-muted: #475569 !important;
+    --ccm-fg-dim: #64748b !important;
+    --ccm-panel: #ffffff !important;
+    --ccm-panel-solid: #f8fafc !important;
+    --ccm-line: rgba(0, 0, 0, 0.12) !important;
+    --ccm-line-hi: rgba(0, 0, 0, 0.22) !important;
+    --ccm-glass: linear-gradient(165deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.01)) !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    -webkit-text-fill-color: #1e293b !important;
+}
+
+html body .ccm-theme-light *,
+html body .ccm-theme-light .ccm-detail-sec-title,
+html body .ccm-theme-light .ccm-detail-sec-text,
+html body .ccm-theme-light .ccm-detail-sub,
+html body .ccm-theme-light .ccm-detail-stats,
+html body .ccm-theme-light .ccm-folder-name,
+html body .ccm-theme-light .ccm-tile-name,
+html body .ccm-theme-light .ccm-modal-head span,
+html body .ccm-theme-light .ccm-sys-bar span,
+html body .ccm-theme-light .checkbox_label span {
+    color: #1e293b !important;
+    -webkit-text-fill-color: #1e293b !important;
+}
+
+html body .ccm-theme-light .ccm-modal-box,
+html body .ccm-theme-light #ccm_embed,
+html body .ccm-theme-light .ccm-detail-box,
+html body .ccm-theme-light .ccm-folder-box {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+html body .ccm-theme-light .ccm-modal-head {
+    background: #f1f5f9 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+html body .ccm-theme-light .ccm-tile {
+    background: #f8fafc !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+html body .ccm-theme-light .ccm-tile-name {
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+html body .ccm-theme-light .ccm-search,
+html body .ccm-theme-light select,
+html body .ccm-theme-light input.text_pole {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    border: 1px solid rgba(0, 0, 0, 0.18) !important;
+}
+
+html body .ccm-theme-light .ccm-qbtn,
+html body .ccm-theme-light .ccm-fchip,
+html body .ccm-theme-light .ccm-tchip,
+html body .ccm-theme-light .ccm-fdchip,
+html body .ccm-theme-light .ccm-pgbtn,
+html body .ccm-theme-light .ccm-btn {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    -webkit-text-fill-color: #334155 !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+html body .ccm-theme-light .ccm-qbtn:hover,
+html body .ccm-theme-light .ccm-fchip-on,
+html body .ccm-theme-light .ccm-tchip-on,
+html body .ccm-theme-light .ccm-fdchip-on,
+html body .ccm-theme-light .ccm-btn-primary {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border-color: #0284c7 !important;
+}
+
+/* ---- 紧凑模式 (Compact Mode) ---- */
+html body .ccm-compact .ccm-grid,
+html body .ccm-compact#ccm_grid {
+    gap: 5px !important;
+    padding: 6px 4px 8px !important;
+}
+
+html body .ccm-compact .ccm-tile-name {
+    font-size: 0.68em !important;
+    padding: 3px 4px 4px !important;
+    line-height: 1.2 !important;
+}
+
+html body .ccm-compact .ccm-qbtn {
+    min-height: 36px !important;
+    padding: 6px 6px !important;
+    font-size: 0.76em !important;
+}
+
+html body .ccm-compact .ccm-fchip,
+html body .ccm-compact .ccm-tchip,
+html body .ccm-compact .ccm-fdchip {
+    min-height: 30px !important;
+    padding: 4px 10px !important;
+    font-size: 0.8em !important;
+}
+
+html body .ccm-compact .ccm-search-wrap input {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 0.88em !important;
+}

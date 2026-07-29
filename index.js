@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '3.1.4';
+    const VERSION = '3.2.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -42,6 +42,9 @@
         if (!Array.isArray(settings.favs)) settings.favs = [];
         if (!Array.isArray(settings.recent)) settings.recent = [];
         if (!['recent', 'name', 'added'].includes(settings.sort)) settings.sort = 'recent';
+        if (typeof settings.quickbarCollapsed !== 'boolean') settings.quickbarCollapsed = false;
+        if (typeof settings.compact !== 'boolean') settings.compact = false;
+        if (!['dark', 'light'].includes(settings.theme)) settings.theme = 'dark';
         if (!Array.isArray(settings.folders)) settings.folders = [];
         if (!settings.cardFolder || typeof settings.cardFolder !== 'object') settings.cardFolder = {};
         // 每页数量必须是 3 的倍数：网格固定一排三张，除不尽会在页尾留空位
@@ -58,7 +61,17 @@
         if (!Array.isArray(settings.recent)) settings.recent = [];
         settings.favs = settings.favs.filter((a) => typeof a === 'string' && a);
         settings.recent = settings.recent.filter((a) => typeof a === 'string' && a);
-        const save = () => ctx.saveSettingsDebounced();
+        const save = (immediate = false) => {
+            try {
+                ctx.saveSettingsDebounced();
+                if (immediate) {
+                    if (typeof ctx.saveSettings === 'function') ctx.saveSettings();
+                    else if (typeof window.saveSettingsApp === 'function') window.saveSettingsApp();
+                }
+            } catch (e) {
+                console.warn('[角色卡管理] 保存设置异常', e);
+            }
+        };
         // 默认值迁移只改了内存，立刻落盘，避免刷新后反复迁移
         save();
 
@@ -139,7 +152,7 @@
         function setCardFolder(avatar, folderId) {
             if (folderId) settings.cardFolder[avatar] = folderId;
             else delete settings.cardFolder[avatar];
-            save();
+            save(true);
         }
 
         function createFolder(name) {
@@ -149,12 +162,15 @@
             if (settings.folders.some((f) => f.name === name)) { toastr.warning('已存在同名文件夹'); return null; }
             const f = { id: uid(), name };
             settings.folders.push(f);
-            save();
+            save(true);
             return f;
         }
 
         function pruneSettings() {
-            const avatars = new Set(chars().map((ch) => ch.avatar));
+            const list = chars();
+            // 防防御：角色列表未加载（空数组）时决不执行清理，防止误擦除 cardFolder 映射
+            if (!list || !list.length) return false;
+            const avatars = new Set(list.map((ch) => ch.avatar));
             let changed = false;
             const favs = settings.favs.filter((a) => avatars.has(a));
             if (favs.length !== settings.favs.length) { settings.favs = favs; changed = true; }
@@ -1308,6 +1324,14 @@
             renderRows();
         }
 
+        function syncContainerStyles(target) {
+            const el = (target && target.length) ? target : $('.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed');
+            el.toggleClass('ccm-compact', !!settings.compact);
+            el.toggleClass('ccm-theme-light', settings.theme === 'light');
+            el.toggleClass('ccm-theme-dark', settings.theme !== 'light');
+            el.toggleClass('ccm-quick-collapsed', !!settings.quickbarCollapsed);
+        }
+
         function managerInnerHtml() {
             return `
                   <div class="ccm-search-wrap">
@@ -1348,6 +1372,26 @@
                 $('#ccm_grid').scrollTop(0);
             });
             syncClear();
+            syncContainerStyles(box);
+            box.find('#ccm_compact_btn').toggleClass('ccm-head-on', !!settings.compact).on('click', function() {
+                settings.compact = !settings.compact;
+                save(true);
+                syncContainerStyles();
+                $(this).toggleClass('ccm-head-on', !!settings.compact);
+                toastr.info(settings.compact ? '已开启紧凑模式' : '已恢复标准界面尺寸', '角色卡管理');
+            });
+            box.find('#ccm_theme_btn').on('click', () => {
+                settings.theme = (settings.theme === 'light') ? 'dark' : 'light';
+                save(true);
+                syncContainerStyles();
+                toastr.info(settings.theme === 'light' ? '已切换至浅色主题' : '已切换至暗色玻璃主题', '角色卡管理');
+            });
+            box.find('#ccm_quick_btn').on('click', () => {
+                settings.quickbarCollapsed = !settings.quickbarCollapsed;
+                save(true);
+                syncContainerStyles();
+                renderQuickbar();
+            });
             box.find('#ccm_batch').on('click', toggleBatchMode).toggleClass('ccm-head-on', selectMode);
             box.find('#ccm_refresh').on('click', () => {
                 renderFilters();
@@ -1436,6 +1480,19 @@
             const bar = $('#ccm_quickbar');
             if (!bar.length) return;
             bar.empty();
+            bar.toggleClass('ccm-quickbar-collapsed', !!settings.quickbarCollapsed);
+            if (settings.quickbarCollapsed) {
+                $('<button type="button" class="ccm-qbtn ccm-qbtn-unfold"></button>')
+                    .html('<i class="fa-solid fa-chevron-down"></i> 展开快捷工具栏')
+                    .attr('title', '展开导入/新建/随机/备份等快捷按钮')
+                    .on('click', () => {
+                        settings.quickbarCollapsed = false;
+                        save(true);
+                        syncContainerStyles();
+                        renderQuickbar();
+                    }).appendTo(bar);
+                return;
+            }
             const mk = (icon, label, title, fn) => $('<button type="button" class="ccm-qbtn"></button>')
                 .attr('title', title)
                 .append($('<i class="fa-solid ' + icon + '"></i>'), $('<span></span>').text(label))
@@ -1478,6 +1535,14 @@
                 for (const ch of list) { exportCard(ch, true); await sleep(350); }
                 toastr.success('已全部触发下载', '角色卡管理');
             });
+            $('<button type="button" class="ccm-qbtn ccm-qbtn-fold" title="折叠快捷工具栏（省出网格高度）"></button>')
+                .html('<i class="fa-solid fa-chevron-up"></i> 折叠')
+                .on('click', () => {
+                    settings.quickbarCollapsed = true;
+                    save(true);
+                    syncContainerStyles();
+                    renderQuickbar();
+                }).appendTo(bar);
         }
 
         function openManager() {
@@ -1497,7 +1562,7 @@
                     <span><i class="fa-solid fa-address-book"></i> CHAR·MANAGER <span class="ccm-sys-ver">v${VERSION}</span><i class="ccm-blink">▊</i></span>
                     <span class="ccm-head-tools">
                       <span id="ccm_count" class="ccm-count"></span>
-                      <i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
+                      <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-circle-half-stroke ccm-head-btn" id="ccm_theme_btn" title="切换深/浅色主题"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
                       <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
                     </span>
@@ -1521,7 +1586,7 @@
                     <span class="ccm-embed-title"><i class="fa-solid fa-address-book"></i> CHAR·MANAGER</span>
                     <span class="ccm-head-tools">
                       <span id="ccm_count" class="ccm-count"></span>
-                      <i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
+                      <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-circle-half-stroke ccm-head-btn" id="ccm_theme_btn" title="切换深/浅色主题"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
                       <i class="fa-solid fa-table-list ccm-head-btn" id="ccm_native_back" title="退出接管，恢复酒馆原生角色列表"></i>
                     </span>
@@ -1542,7 +1607,9 @@
 
         function unmountEmbed() {
             $('#ccm_embed').remove();
-            $('#rm_characters_block').removeClass('ccm-native-takeover');
+            const host = $('#rm_characters_block');
+            host.removeClass('ccm-native-takeover');
+            host.removeAttr('style');
         }
 
         function setupNativeTakeover() {
@@ -1655,6 +1722,21 @@
                 <input id="ccm_tapchat" type="checkbox">
                 <span>点击卡片直接开始聊天（关闭后点卡片先看详情，防误触）</span>
               </label>
+              <label class="checkbox_label ccm-takeover-row" for="ccm_compact_setting">
+                <input id="ccm_compact_setting" type="checkbox">
+                <span>紧凑模式（调小字号与卡片间距，一屏显示更多卡片）</span>
+              </label>
+              <label class="checkbox_label ccm-takeover-row" for="ccm_quick_setting">
+                <input id="ccm_quick_setting" type="checkbox">
+                <span>默认折叠顶部快捷工具栏（腾出下方角色卡空间）</span>
+              </label>
+              <div class="ccm-setting-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+                <span>主题风格：</span>
+                <select id="ccm_theme_setting" class="text_pole" style="width:auto;min-width:140px;height:36px;">
+                  <option value="dark">暗色玻璃 (Dark)</option>
+                  <option value="light">浅色明亮 (Light)</option>
+                </select>
+              </div>
               <small class="ccm-note">快捷入口：输入框旁魔棒菜单 → 角色卡管理，或命令 /charman；按名称切换：/charswitch 角色名。文件夹、收藏与最近记录都存于本机酒馆设置中，不修改角色卡文件。</small>
             </div>
           </div>
