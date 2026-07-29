@@ -2468,3 +2468,133 @@ html body .ccm-theme-light #ccm_batchbar {
     padding-bottom: 2px !important;
     min-height: 32px !important;
 }
+
+
+/* ============================================================
+   v4.0.0 TAKEOVER FULL-BLEED, TAG EDITOR & COLLAPSED BAR FIXES
+   ============================================================ */
+
+/* 接管时隐藏原生面板杂项（hotswap 条 / 当前角色名 tab / token 信息），管理器完全覆盖无缝隙 */
+#right-nav-panel.ccm-takeover-active #CharListButtonAndHotSwaps,
+#right-nav-panel.ccm-takeover-active #rm_PinAndTabs {
+    display: none !important;
+}
+
+/* 接管宿主去掉原生内边距，消除顶部与四周缝隙 */
+#rm_characters_block.ccm-native-takeover {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 折叠后的快捷栏收纳头靠右，与头部按钮组对齐 */
+html body .ccm-quickbar-collapsed,
+html body #ccm_quickbar.ccm-quickbar-collapsed {
+    display: flex !important;
+    justify-content: flex-end !important;
+    padding: 4px 10px !important;
+}
+
+html body .ccm-qbtn-unfold {
+    width: auto !important;
+    margin-left: auto !important;
+    text-align: right !important;
+}
+
+/* 详情弹窗：标签快速编辑 */
+.ccm-tag-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ccm-tag-x {
+    cursor: pointer;
+    opacity: 0.65;
+    font-size: 0.85em;
+    margin-left: 2px;
+}
+
+.ccm-tag-x:hover {
+    opacity: 1;
+    color: #f87171;
+}
+
+.ccm-tag-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px dashed rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: inherit;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 0.85em;
+    cursor: pointer;
+    opacity: 0.85;
+}
+
+.ccm-tag-add:hover {
+    opacity: 1;
+    border-color: var(--ccm-c1, #22d3ee);
+}
+
+.ccm-tagpicker {
+    margin-top: 6px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ccm-tagpicker-newrow {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.ccm-tagpicker-newrow .ccm-tag-newinput {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 30px;
+}
+
+.ccm-tagpicker-newrow .ccm-tag-create {
+    flex: 0 0 auto;
+    height: 30px;
+    padding: 0 12px;
+}
+
+.ccm-tagpicker-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 132px;
+    overflow-y: auto;
+}
+
+.ccm-tchip-pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ccm-tchip-pick .ccm-tag-del {
+    opacity: 0.55;
+    font-size: 0.85em;
+}
+
+.ccm-tchip-pick .ccm-tag-del:hover {
+    opacity: 1;
+    color: #f87171;
+}
+
+.ccm-tagpicker-empty {
+    opacity: 0.6;
+    font-size: 0.85em;
+    padding: 4px 2px;
+}
+
+/* 返回聊天按钮 */
+.ccm-back-chat {
+    margin-right: 2px;
+}

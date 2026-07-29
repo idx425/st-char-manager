@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '3.2.3';
+    const VERSION = '4.0.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -116,6 +116,83 @@
                 if (c && typeof c.getThumbnailUrl === 'function') return c.getThumbnailUrl('avatar', ch.avatar);
             } catch { /* 走手动拼接 */ }
             return '/thumbnail?type=avatar&file=' + encodeURIComponent(ch.avatar);
+        }
+
+        /* ---------------- 标签写入（tag_map/tags 存于酒馆设置，纯前端持久化） ---------------- */
+        function tagMapRef() {
+            const c = getCtx();
+            return (c && c.tagMap && typeof c.tagMap === 'object') ? c.tagMap : null;
+        }
+
+        function allGlobalTags() {
+            const c = getCtx();
+            return (c && Array.isArray(c.tags)) ? c.tags.filter(Boolean) : [];
+        }
+
+        function persistTags() {
+            try {
+                const c = getCtx();
+                if (c && typeof c.saveSettingsDebounced === 'function') c.saveSettingsDebounced();
+            } catch (e) { console.warn('[角色卡管理] 标签保存失败', e); }
+        }
+
+        function addTagToCard(ch, tagId) {
+            const tm = tagMapRef();
+            if (!tm || !ch || !ch.avatar) return false;
+            if (!Array.isArray(tm[ch.avatar])) tm[ch.avatar] = [];
+            if (tm[ch.avatar].includes(tagId)) return false;
+            tm[ch.avatar].push(tagId);
+            persistTags();
+            return true;
+        }
+
+        function removeTagFromCard(ch, tagId) {
+            const tm = tagMapRef();
+            if (!tm || !ch || !ch.avatar || !Array.isArray(tm[ch.avatar])) return false;
+            const i = tm[ch.avatar].indexOf(tagId);
+            if (i < 0) return false;
+            tm[ch.avatar].splice(i, 1);
+            persistTags();
+            return true;
+        }
+
+        function createGlobalTag(name) {
+            const c = getCtx();
+            if (!c || !Array.isArray(c.tags)) return null;
+            name = String(name || '').trim();
+            if (!name) return null;
+            const exist = c.tags.find((t) => t && String(t.name).toLowerCase() === name.toLowerCase());
+            if (exist) return exist;
+            const tag = {
+                id: (window.crypto && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : uid(),
+                name,
+                folder_type: 'NONE',
+                filter_state: 'UNDEFINED',
+                sort_order: Math.max(0, ...c.tags.map((t) => Number(t && t.sort_order) || 0)) + 1,
+                is_hidden_on_character_card: false,
+                color: '',
+                color2: '',
+                create_date: Date.now(),
+            };
+            c.tags.push(tag);
+            persistTags();
+            return tag;
+        }
+
+        function deleteGlobalTag(tagId) {
+            const c = getCtx();
+            if (!c || !Array.isArray(c.tags)) return false;
+            const i = c.tags.findIndex((t) => t && t.id === tagId);
+            if (i < 0) return false;
+            c.tags.splice(i, 1);
+            const tm = tagMapRef();
+            if (tm) {
+                Object.keys(tm).forEach((k) => {
+                    if (Array.isArray(tm[k])) tm[k] = tm[k].filter((x) => x !== tagId);
+                });
+            }
+            persistTags();
+            return true;
         }
 
         function charTags(ch) {
@@ -611,12 +688,92 @@
             if (lastChatTs(ch)) subParts.push('最近聊天 ' + new Date(lastChatTs(ch)).toLocaleDateString());
             box.find('.ccm-detail-sub').text(subParts.join(' · ') || '暂无附加信息');
 
+            /* ---- 标签快速管理：点 × 从这张卡移除；「+ 标签」展开 添加/新建/全局删除 ---- */
             const tagBox = box.find('.ccm-detail-tags');
-            if (tags.length) {
-                tags.forEach((t) => $('<span class="ccm-tag"></span>').text(t.name).appendTo(tagBox));
-            } else {
-                tagBox.hide();
-            }
+            tagBox.show();
+            const renderDetailTags = () => {
+                tagBox.empty();
+                charTags(ch).forEach((t) => {
+                    const chip = $('<span class="ccm-tag ccm-tag-edit"></span>');
+                    chip.append($('<span></span>').text(t.name));
+                    chip.append($('<i class="fa-solid fa-xmark ccm-tag-x" title="从这张卡移除该标签"></i>')
+                        .on('click', (e) => {
+                            e.stopPropagation();
+                            if (removeTagFromCard(ch, t.id)) {
+                                toastr.info('已从「' + esc(charName(ch)) + '」移除标签「' + esc(t.name) + '」', '角色卡管理');
+                                renderDetailTags();
+                                renderFilters();
+                                renderGrid();
+                            }
+                        }));
+                    tagBox.append(chip);
+                });
+                tagBox.append($('<button type="button" class="ccm-tag-add" title="添加已有标签 / 新建标签 / 删除全局标签"><i class="fa-solid fa-plus"></i> 标签</button>')
+                    .on('click', (e) => { e.stopPropagation(); picker.slideToggle(120); renderTagPicker(); }));
+            };
+            const picker = $('<div class="ccm-tagpicker"></div>').hide();
+            tagBox.after(picker);
+            const renderTagPicker = () => {
+                picker.empty();
+                const row = $('<div class="ccm-tagpicker-newrow"></div>');
+                const input = $('<input class="text_pole ccm-tag-newinput" maxlength="30" placeholder="输入新标签名，回车创建并贴上" autocomplete="off">');
+                const createBtn = $('<button type="button" class="menu_button ccm-btn ccm-tag-create"><i class="fa-solid fa-plus"></i> 创建</button>');
+                const doCreate = () => {
+                    const name = String(input.val() || '').trim();
+                    if (!name) { toastr.warning('标签名不能为空', '角色卡管理'); return; }
+                    const t = createGlobalTag(name);
+                    if (!t) { toastr.error('标签系统不可用（酒馆版本过旧？）', '角色卡管理'); return; }
+                    addTagToCard(ch, t.id);
+                    input.val('');
+                    toastr.success('标签「' + esc(t.name) + '」已创建并贴到这张卡', '角色卡管理');
+                    renderDetailTags();
+                    renderTagPicker();
+                    renderFilters();
+                    renderGrid();
+                };
+                input.on('keydown', (e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') { e.preventDefault(); doCreate(); }
+                });
+                createBtn.on('click', doCreate);
+                row.append(input, createBtn);
+                picker.append(row);
+                const all = allGlobalTags();
+                if (!all.length) {
+                    picker.append($('<div class="ccm-tagpicker-empty"></div>').text('还没有任何全局标签，先在上方创建一个'));
+                    return;
+                }
+                const listBox = $('<div class="ccm-tagpicker-list"></div>');
+                all.forEach((t) => {
+                    const chip = $('<button type="button" class="ccm-tchip ccm-tchip-pick"></button>')
+                        .toggleClass('ccm-tchip-on', charTags(ch).some((x) => x.id === t.id))
+                        .attr('title', '点击贴上 / 摘下这个标签')
+                        .append($('<span></span>').text(t.name))
+                        .on('click', () => {
+                            if (charTags(ch).some((x) => x.id === t.id)) removeTagFromCard(ch, t.id);
+                            else addTagToCard(ch, t.id);
+                            renderDetailTags();
+                            renderTagPicker();
+                            renderFilters();
+                            renderGrid();
+                        });
+                    chip.append($('<i class="fa-solid fa-trash ccm-tag-del" title="全局删除该标签（所有卡都会移除）"></i>')
+                        .on('click', (e) => {
+                            e.stopPropagation();
+                            if (!confirm('全局删除标签「' + t.name + '」？\n所有角色卡上的这个标签都会被移除。')) return;
+                            deleteGlobalTag(t.id);
+                            if (filterTag === t.id) filterTag = null;
+                            toastr.info('已全局删除标签「' + esc(t.name) + '」', '角色卡管理');
+                            renderDetailTags();
+                            renderTagPicker();
+                            renderFilters();
+                            renderGrid();
+                        }));
+                    listBox.append(chip);
+                });
+                picker.append(listBox);
+            };
+            renderDetailTags();
 
             const folderRow = box.find('.ccm-detail-folderrow');
             const renderDetailFolder = () => {
@@ -1045,7 +1202,13 @@
             for (const m of modes) {
                 $(`<button type="button" class="ccm-fchip"><i class="fa-solid ${m.icon}"></i> ${m.label}</button>`)
                     .toggleClass('ccm-fchip-on', filterMode === m.key)
-                    .on('click', () => { filterMode = m.key; curPage = 1; renderFilters(); renderGrid(); })
+                    .on('click', () => {
+                        filterMode = m.key;
+                        // 「全部」语义 = 展示所有卡：清掉文件夹/标签过滤，
+                        // 否则点过"未归类"或某个文件夹后，全部只剩没分组的卡
+                        if (m.key === 'all') { filterFolder = null; filterTag = null; }
+                        curPage = 1; renderFilters(); renderGrid();
+                    })
                     .appendTo(modeBox);
             }
             $(`<button type="button" class="ccm-fchip ccm-fchip-sort" title="点击切换排序方式"><i class="fa-solid fa-arrow-down-wide-short"></i> ${sortLabel()}</button>`)
@@ -1600,8 +1763,11 @@
             // 已嵌入原生面板时不再叠一层弹窗：直接打开酒馆的角色抽屉
             if (settings.takeover && $('#ccm_embed').length) {
                 const panel = $('#right-nav-panel');
-                if (panel.length && panel.is(':visible')) return;
-                const icon = $('#rightNavDrawerIcon, #rightNavHolder .drawer-toggle').first();
+                // 抽屉开合状态以 openDrawer class 为准（:visible 在位移隐藏的旧版上会误判）
+                if (panel.length && panel.hasClass('openDrawer')) return;
+                // 原生 handler 绑在 .drawer-toggle 上，优先直接触发它
+                let icon = $('#rightNavHolder .drawer-toggle').first();
+                if (!icon.length) icon = $('#rightNavDrawerIcon').first();
                 if (icon.length) { icon.trigger('click'); return; }
                 toastr.info('管理器已嵌入酒馆的角色面板，点右上角角色图标打开', '角色卡管理');
                 return;
@@ -1624,16 +1790,32 @@
         }
 
         /* ---------------- 原生角色面板：嵌入式接管（替换原生列表） ---------------- */
+        /* 收起角色抽屉回到聊天：优先走酒馆原生 toggle（保持图标状态同步），兜底手动切 class */
+        function closeCharDrawer() {
+            const panel = $('#right-nav-panel');
+            if (!panel.length || !panel.hasClass('openDrawer')) return;
+            const toggle = $('.drawer-toggle').filter(function () {
+                return $(this).parent().find('#right-nav-panel').length > 0;
+            }).first();
+            if (toggle.length) {
+                toggle.trigger('click');
+                if (!panel.hasClass('openDrawer')) return;
+            }
+            panel.toggleClass('closedDrawer openDrawer');
+            $('#rightNavDrawerIcon').toggleClass('closedIcon openIcon');
+        }
+
         function mountEmbed() {
             if (!settings.takeover) return false;
             if ($('#ccm_embed').length) return true;
             const host = $('#rm_characters_block');
             if (!host.length) return false;
             host.addClass('ccm-native-takeover');
+            $('#right-nav-panel').addClass('ccm-takeover-active');
             const embed = $(`
                 <div id="ccm_embed" class="ccm-embed-box">
                   <div class="ccm-embed-head">
-                    <span class="ccm-embed-title"><i class="fa-solid fa-address-book"></i> CHAR·MANAGER</span>
+                    <span class="ccm-embed-title"><i class="fa-solid fa-chevron-left ccm-head-btn ccm-back-chat" id="ccm_back_chat" title="返回聊天（收起角色面板）"></i><i class="fa-solid fa-address-book"></i> CHAR·MANAGER</span>
                     <span class="ccm-head-tools">
                       <span id="ccm_count" class="ccm-count"></span>
                       <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-circle-half-stroke ccm-head-btn" id="ccm_theme_btn" title="切换深/浅色主题"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
@@ -1645,6 +1827,7 @@
                 </div>`);
             host.append(embed);
             bindManagerControls(embed);
+            embed.find('#ccm_back_chat').on('click', () => closeCharDrawer());
             embed.find('#ccm_native_back').on('click', () => {
                 settings.takeover = false;
                 save();
@@ -1659,6 +1842,7 @@
             $('#ccm_embed').remove();
             const host = $('#rm_characters_block');
             host.removeClass('ccm-native-takeover');
+            $('#right-nav-panel').removeClass('ccm-takeover-active');
             host.removeAttr('style');
             $('body').removeClass('ccm-theme-light ccm-theme-dark');
         }
