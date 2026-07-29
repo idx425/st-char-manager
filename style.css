@@ -2387,7 +2387,8 @@ html body .ccm-theme-light .ccm-tile-del {
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
 }
 
-html body .ccm-theme-light .ccm-tile-fav.ccm-on {
+html body .ccm-theme-light .ccm-tile-fav.ccm-on,
+html body .ccm-theme-light .ccm-fav-on {
     color: #f59e0b !important;
     -webkit-text-fill-color: #f59e0b !important;
 }
