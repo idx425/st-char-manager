@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '3.2.0';
+    const VERSION = '3.2.1';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1325,11 +1325,16 @@
         }
 
         function syncContainerStyles(target) {
-            const el = (target && target.length) ? target : $('.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed');
+            const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
+            const el = (target && target.length) ? $(sel).add(target) : $(sel);
             el.toggleClass('ccm-compact', !!settings.compact);
             el.toggleClass('ccm-theme-light', settings.theme === 'light');
             el.toggleClass('ccm-theme-dark', settings.theme !== 'light');
             el.toggleClass('ccm-quick-collapsed', !!settings.quickbarCollapsed);
+            if (settings.takeover) {
+                $('body').toggleClass('ccm-theme-light', settings.theme === 'light');
+                $('body').toggleClass('ccm-theme-dark', settings.theme !== 'light');
+            }
         }
 
         function managerInnerHtml() {

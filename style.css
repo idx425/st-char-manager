@@ -2163,22 +2163,28 @@ html body .ccm-qbtn-fold {
     opacity: 0.88 !important;
 }
 
-/* ---- 浅色明亮主题 (Light Mode) ---- */
-.ccm-theme-light,
-.ccm-theme-light .ccm-sys-bar,
-.ccm-theme-light.ccm-overlay,
-.ccm-theme-light .ccm-modal-box,
-.ccm-theme-light .ccm-embed-box,
-.ccm-theme-light#ccm_embed,
-.ccm-theme-light .ccm-detail-section,
-.ccm-theme-light .ccm-folder-row,
-.ccm-theme-light .ccm-pick-item,
-.ccm-theme-light .ccm-batchbar,
-.ccm-theme-light .ccm-quickbar,
-#ccm_embed.ccm-theme-light,
-.ccm-modal-box.ccm-theme-light {
-    --ccm-c1: #0284c7;
-    --ccm-c2: #6366f1;
+
+/* ============================================================
+   v3.2.1 LIGHT THEME & DARK THEME FULL OVERRIDES
+   最高优先级精细化浅色明亮主题 (Light Mode) 修复
+   ============================================================ */
+
+/* 1. 浅色模式全局变量与主容器 */
+html body .ccm-theme-light,
+html body.ccm-theme-light,
+html body .ccm-theme-light .ccm-settings,
+html body .ccm-theme-light .ccm-overlay,
+html body .ccm-theme-light .ccm-modal-box,
+html body .ccm-theme-light .ccm-embed-box,
+html body .ccm-theme-light #ccm_embed,
+html body .ccm-theme-light .ccm-manager-box,
+html body .ccm-theme-light #rm_characters_block,
+html body #rm_characters_block.ccm-theme-light,
+html body #ccm_embed.ccm-theme-light,
+html body .ccm-modal-box.ccm-theme-light,
+html body #ccm_detail_modal.ccm-theme-light {
+    --ccm-c1: #0284c7 !important;
+    --ccm-c2: #6366f1 !important;
     --ccm-fg: #1e293b !important;
     --ccm-fg-strong: #0f172a !important;
     --ccm-fg-muted: #475569 !important;
@@ -2188,113 +2194,246 @@ html body .ccm-qbtn-fold {
     --ccm-line: rgba(0, 0, 0, 0.12) !important;
     --ccm-line-hi: rgba(0, 0, 0, 0.22) !important;
     --ccm-glass: linear-gradient(165deg, rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.01)) !important;
-    background-color: #ffffff !important;
-    color: #1e293b !important;
-    -webkit-text-fill-color: #1e293b !important;
-}
-
-html body .ccm-theme-light *,
-html body .ccm-theme-light .ccm-detail-sec-title,
-html body .ccm-theme-light .ccm-detail-sec-text,
-html body .ccm-theme-light .ccm-detail-sub,
-html body .ccm-theme-light .ccm-detail-stats,
-html body .ccm-theme-light .ccm-folder-name,
-html body .ccm-theme-light .ccm-tile-name,
-html body .ccm-theme-light .ccm-modal-head span,
-html body .ccm-theme-light .ccm-sys-bar span,
-html body .ccm-theme-light .checkbox_label span {
-    color: #1e293b !important;
-    -webkit-text-fill-color: #1e293b !important;
-}
-
-html body .ccm-theme-light .ccm-modal-box,
-html body .ccm-theme-light #ccm_embed,
-html body .ccm-theme-light .ccm-detail-box,
-html body .ccm-theme-light .ccm-folder-box {
     background: #ffffff !important;
     background-color: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12) !important;
+    color: #1e293b !important;
+    -webkit-text-fill-color: #1e293b !important;
 }
 
+/* 2. 基础文本与通用元素 */
+html body .ccm-theme-light *,
+html body.ccm-theme-light *,
+html body .ccm-theme-light span,
+html body .ccm-theme-light label,
+html body .ccm-theme-light div,
+html body .ccm-theme-light p {
+    color: #1e293b;
+    -webkit-text-fill-color: #1e293b;
+}
+
+/* 3. 系统状态栏与顶部标题 */
+html body .ccm-theme-light .ccm-sys-bar,
+html body .ccm-theme-light .ccm-embed-head,
 html body .ccm-theme-light .ccm-modal-head {
     background: #f1f5f9 !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+    background-color: #f1f5f9 !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: #0f172a !important;
 }
 
-html body .ccm-theme-light .ccm-tile {
-    background: #f8fafc !important;
-    border: 1px solid rgba(0, 0, 0, 0.12) !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
-}
-
-html body .ccm-theme-light .ccm-tile-name {
-    background: rgba(255, 255, 255, 0.92) !important;
+html body .ccm-theme-light .ccm-sys-bar span,
+html body .ccm-theme-light .ccm-sys-id,
+html body .ccm-theme-light .ccm-embed-title,
+html body .ccm-theme-light .ccm-modal-head span,
+html body .ccm-theme-light .ccm-modal-close,
+html body .ccm-theme-light .ccm-head-btn {
     color: #0f172a !important;
     -webkit-text-fill-color: #0f172a !important;
+    opacity: 1 !important;
+}
+
+html body .ccm-theme-light .ccm-head-btn:hover {
+    color: #0284c7 !important;
+    -webkit-text-fill-color: #0284c7 !important;
+}
+
+html body .ccm-theme-light .ccm-sys-ver,
+html body .ccm-theme-light .ccm-note,
+html body .ccm-theme-light .ccm-count,
+html body .ccm-theme-light .ccm-quick-title {
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
+}
+
+/* 4. 搜索框与输入框 */
+html body .ccm-theme-light .ccm-search-wrap {
+    background: transparent !important;
 }
 
 html body .ccm-theme-light .ccm-search,
+html body .ccm-theme-light input.text_pole,
 html body .ccm-theme-light select,
-html body .ccm-theme-light input.text_pole {
-    background: #f1f5f9 !important;
+html body .ccm-theme-light .ccm-folder-rename {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
     color: #0f172a !important;
     -webkit-text-fill-color: #0f172a !important;
-    border: 1px solid rgba(0, 0, 0, 0.18) !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    caret-color: #0284c7 !important;
 }
 
+html body .ccm-theme-light .ccm-search::placeholder,
+html body .ccm-theme-light input.text_pole::placeholder {
+    color: #64748b !important;
+    -webkit-text-fill-color: #64748b !important;
+    opacity: 0.85 !important;
+}
+
+html body .ccm-theme-light .ccm-search-icon,
+html body .ccm-theme-light .ccm-search-clear {
+    color: #64748b !important;
+    -webkit-text-fill-color: #64748b !important;
+}
+
+/* 5. 工具栏、快捷栏、文件夹栏与标签栏 */
+html body .ccm-theme-light .ccm-quickbar,
+html body .ccm-theme-light #ccm_quickbar,
+html body .ccm-theme-light .ccm-modes,
+html body .ccm-theme-light #ccm_modes,
+html body .ccm-theme-light .ccm-folderbar,
+html body .ccm-theme-light #ccm_folderbar,
+html body .ccm-theme-light .ccm-tagbar,
+html body .ccm-theme-light #ccm_tagbar {
+    background: #f8fafc !important;
+    background-color: #f8fafc !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 按钮与 Chip 默认态 */
 html body .ccm-theme-light .ccm-qbtn,
 html body .ccm-theme-light .ccm-fchip,
 html body .ccm-theme-light .ccm-tchip,
 html body .ccm-theme-light .ccm-fdchip,
 html body .ccm-theme-light .ccm-pgbtn,
 html body .ccm-theme-light .ccm-btn {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    -webkit-text-fill-color: #334155 !important;
+    border: 1px solid rgba(0, 0, 0, 0.16) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+html body .ccm-theme-light .ccm-qbtn:hover,
+html body .ccm-theme-light .ccm-fchip:hover,
+html body .ccm-theme-light .ccm-tchip:hover,
+html body .ccm-theme-light .ccm-fdchip:hover,
+html body .ccm-theme-light .ccm-pgbtn:hover:not(:disabled),
+html body .ccm-theme-light .ccm-btn:hover {
     background: #f1f5f9 !important;
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    border-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 按钮与 Chip 选中高亮态 */
+html body .ccm-theme-light .ccm-fchip-on,
+html body .ccm-theme-light .ccm-tchip-on,
+html body .ccm-theme-light .ccm-fdchip-on,
+html body .ccm-theme-light .ccm-qbtn-active,
+html body .ccm-theme-light .ccm-btn-primary,
+html body .ccm-theme-light .ccm-pgsize {
+    background: #0284c7 !important;
+    background-color: #0284c7 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border-color: #0284c7 !important;
+    box-shadow: 0 2px 5px rgba(2, 132, 199, 0.25) !important;
+}
+
+/* 6. 分页栏 (Pager) */
+html body .ccm-theme-light .ccm-pager,
+html body .ccm-theme-light #ccm_pager {
+    background: #f8fafc !important;
+    background-color: #f8fafc !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+html body .ccm-theme-light .ccm-pginfo,
+html body .ccm-theme-light span.ccm-pginfo {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+html body .ccm-theme-light .ccm-pgbtn:disabled {
+    opacity: 0.35 !important;
+    background: #f1f5f9 !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8 !important;
+}
+
+/* 7. 角色卡片网格 (Tiles) */
+html body .ccm-theme-light .ccm-tile {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+html body .ccm-theme-light .ccm-tile:hover {
+    border-color: #0284c7 !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15) !important;
+}
+
+html body .ccm-theme-light .ccm-tile-name {
+    background: rgba(255, 255, 255, 0.95) !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+}
+
+html body .ccm-theme-light .ccm-tile-fav,
+html body .ccm-theme-light .ccm-tile-info,
+html body .ccm-theme-light .ccm-tile-del {
+    background: rgba(255, 255, 255, 0.88) !important;
     color: #334155 !important;
     -webkit-text-fill-color: #334155 !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
 }
 
-html body .ccm-theme-light .ccm-qbtn:hover,
-html body .ccm-theme-light .ccm-fchip-on,
-html body .ccm-theme-light .ccm-tchip-on,
-html body .ccm-theme-light .ccm-fdchip-on,
-html body .ccm-theme-light .ccm-btn-primary {
-    background: #0284c7 !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    border-color: #0284c7 !important;
+html body .ccm-theme-light .ccm-tile-fav.ccm-on {
+    color: #f59e0b !important;
+    -webkit-text-fill-color: #f59e0b !important;
 }
 
-/* ---- 紧凑模式 (Compact Mode) ---- */
-html body .ccm-compact .ccm-grid,
-html body .ccm-compact#ccm_grid {
-    gap: 5px !important;
-    padding: 6px 4px 8px !important;
+/* 8. 详情弹窗与设置模态框 (Detail Modal & Overlay) */
+html body .ccm-theme-light .ccm-detail-box,
+html body .ccm-theme-light #ccm_detail_modal .ccm-detail-box,
+html body .ccm-theme-light .ccm-modal-box,
+html body .ccm-theme-light .ccm-folder-box {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16) !important;
 }
 
-html body .ccm-compact .ccm-tile-name {
-    font-size: 0.68em !important;
-    padding: 3px 4px 4px !important;
-    line-height: 1.2 !important;
+html body .ccm-theme-light .ccm-detail-section,
+html body .ccm-theme-light .ccm-folder-row,
+html body .ccm-theme-light .ccm-pick-item {
+    background: #f8fafc !important;
+    background-color: #f8fafc !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
-html body .ccm-compact .ccm-qbtn {
-    min-height: 36px !important;
-    padding: 6px 6px !important;
-    font-size: 0.76em !important;
+html body .ccm-theme-light .ccm-detail-name,
+html body .ccm-theme-light .ccm-detail-name-text,
+html body .ccm-theme-light .ccm-detail-sec-title,
+html body .ccm-theme-light .ccm-detail-sec-text,
+html body .ccm-theme-light .ccm-detail-sec-title *,
+html body .ccm-theme-light .ccm-detail-sec-text *,
+html body .ccm-theme-light .ccm-folder-name {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
 }
 
-html body .ccm-compact .ccm-fchip,
-html body .ccm-compact .ccm-tchip,
-html body .ccm-compact .ccm-fdchip {
-    min-height: 30px !important;
-    padding: 4px 10px !important;
-    font-size: 0.8em !important;
+html body .ccm-theme-light .ccm-detail-sub,
+html body .ccm-theme-light .ccm-detail-stats,
+html body .ccm-theme-light .ccm-dim {
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
 }
 
-html body .ccm-compact .ccm-search-wrap input {
-    min-height: 36px !important;
-    height: 36px !important;
-    font-size: 0.88em !important;
+/* 9. 批量操作栏 */
+html body .ccm-theme-light .ccm-batchbar,
+html body .ccm-theme-light #ccm_batchbar {
+    background: #f1f5f9 !important;
+    background-color: #f1f5f9 !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.12) !important;
+    color: #0f172a !important;
 }
