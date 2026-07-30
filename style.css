@@ -2189,3 +2189,45 @@ html body .ccm-qbtn-fold {
     background: rgba(255, 255, 255, 0.15) !important;
     color: #ffffff !important;
 }
+
+/* ---------------- 强制暗色样式覆盖防污染 ---------------- */
+html body .ccm-modal-box,
+html body .ccm-detail-box,
+html body .ccm-embed-box {
+    background-color: rgba(15, 20, 28, 0.95) !important;
+    color: #e2e8f0 !important;
+    text-shadow: none !important;
+}
+html body .ccm-btn, 
+html body .ccm-tchip, 
+html body .ccm-fchip, 
+html body .ccm-fdchip,
+html body .ccm-tagbar-input,
+html body .ccm-tagbar-add,
+html body .ccm-sec-copy {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    text-shadow: none !important;
+}
+html body .ccm-btn:hover, 
+html body .ccm-tchip:hover, 
+html body .ccm-fchip:hover, 
+html body .ccm-fdchip:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+html body .ccm-tchip-on,
+html body .ccm-fchip-on,
+html body .ccm-fdchip-on {
+    background-color: rgba(34, 211, 238, 0.15) !important;
+    border-color: rgba(34, 211, 238, 0.4) !important;
+    color: #38bdf8 !important;
+}
+html body .ccm-detail-sec-title,
+html body .ccm-detail-name-text {
+    color: #f8fafc !important;
+}
+html body .ccm-detail-sec-text {
+    color: #cbd5e1 !important;
+}

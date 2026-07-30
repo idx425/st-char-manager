@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '5.5.0';
+    const VERSION = '5.6.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -446,6 +446,16 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 setTimeout(closeCharDrawer, 10);
                 setTimeout(closeCharDrawer, 50); // 双重保险，彻底压制原生侧边栏抢占
                 setTimeout(closeCharDrawer, 100); // 终极保险
+
+                // 4. 强行剥夺焦点，防止手机端自动弹起键盘遮挡阅读视线
+                const dropKeyboard = () => {
+                    const ta = document.getElementById('send_textarea');
+                    if (ta) ta.blur();
+                    if (document.activeElement) document.activeElement.blur();
+                };
+                dropKeyboard();
+                setTimeout(dropKeyboard, 50);
+                setTimeout(dropKeyboard, 150);
 
                 toastr.success('已切换到「' + esc(charName(ch)) + '」', '角色卡管理');
                 return true;
@@ -1289,28 +1299,31 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
         }
 
         function renderGrid() {
-            const grid = $('#ccm_grid');
-            if (!grid.length) return;
-            // 全量重绘前记住滚动位置，否则点星标收藏会把列表弹回顶部
-            const keepScroll = grid.scrollTop();
-            grid.empty();
+            const grids = $('.ccm-grid');
+            if (!grids.length) return;
             const list = filteredChars();
-            $('#ccm_count').text(list.length + ' / ' + chars().filter(Boolean).length);
+            $('.ccm-sys-count').text(list.length + ' / ' + chars().filter(Boolean).length);
             const pages = Math.max(1, Math.ceil(list.length / settings.pageSize));
             if (curPage > pages) curPage = pages;
             if (curPage < 1) curPage = 1;
-            if (!list.length) {
-                grid.append($('<div class="ccm-empty"><i class="fa-regular fa-folder-open"></i><span>没有匹配的角色卡</span></div>'));
-            } else {
-                currentPageList().forEach((ch) => grid.append(charTile(ch)));
-            }
+            
+            grids.each(function() {
+                const grid = $(this);
+                const keepScroll = grid.scrollTop();
+                grid.empty();
+                if (!list.length) {
+                    grid.append($('<div class="ccm-empty"><i class="fa-regular fa-folder-open"></i><span>没有匹配的角色卡</span></div>'));
+                } else {
+                    currentPageList().forEach((ch) => grid.append(charTile(ch)));
+                }
+                grid.scrollTop(keepScroll);
+            });
             renderPager(pages, list.length);
             renderBatchBar();
-            grid.scrollTop(keepScroll);
         }
 
         function renderPager(pages, count) {
-            const bar = $('#ccm_pager');
+            const bar = $('.ccm-pager');
             if (!bar.length) return;
             bar.empty();
             if (!count || (pages <= 1 && count <= 10)) { bar.hide(); return; }
@@ -1357,7 +1370,7 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 { key: 'fav', icon: 'fa-star', label: '收藏' },
                 { key: 'recent', icon: 'fa-clock-rotate-left', label: '最近' },
             ];
-            const modeBox = $('#ccm_modes').empty();
+            const modeBox = $('.ccm-modes').empty();
             for (const m of modes) {
                 $(`<button type="button" class="ccm-fchip"><i class="fa-solid ${m.icon}"></i> ${m.label}</button>`)
                     .toggleClass('ccm-fchip-on', filterMode === m.key)
@@ -1383,7 +1396,7 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
 
             renderFolders();
 
-            const tagBox = $('#ccm_tagbar').empty();
+            const tagBox = $('.ccm-tagbar').empty();
             const tags = allGlobalTags();
             if (filterTag && !tags.some((t) => t.id === filterTag)) filterTag = null;
             tagBox.show();
@@ -1457,7 +1470,7 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
         }
 
         function renderFolders() {
-            const box = $('#ccm_folderbar');
+            const box = $('.ccm-folderbar');
             if (!box.length) return;
             box.empty();
             if (filterFolder && filterFolder !== '__none__' && !folderById(filterFolder)) filterFolder = null;
@@ -1540,7 +1553,7 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
         }
 
         function renderBatchBar() {
-            const bar = $('#ccm_batchbar');
+            const bar = $('.ccm-batchbar');
             if (!bar.length) return;
             if (!selectMode) { bar.hide(); return; }
             bar.empty().show();
@@ -1934,12 +1947,12 @@ function syncContainerStyles(target) {
                     <i class="fa-solid fa-circle-xmark ccm-search-clear" id="ccm_search_clear" title="清空搜索"></i>
                   </div>
                   <div id="ccm_quickbar" class="ccm-quickbar"></div>
-                  <div id="ccm_modes" class="ccm-modes"></div>
-                  <div id="ccm_folderbar" class="ccm-folderbar"></div>
-                  <div id="ccm_tagbar" class="ccm-tagbar"></div>
-                  <div id="ccm_grid" class="ccm-grid"></div>
-                  <div id="ccm_batchbar" class="ccm-batchbar" style="display:none"></div>
-                  <div id="ccm_pager" class="ccm-pager" style="display:none"></div>`;
+                  <div class="ccm-modes" class="ccm-modes"></div>
+                  <div class="ccm-folderbar" class="ccm-folderbar"></div>
+                  <div class="ccm-tagbar" class="ccm-tagbar"></div>
+                  <div class="ccm-grid" class="ccm-grid"></div>
+                  <div class="ccm-batchbar" class="ccm-batchbar" style="display:none"></div>
+                  <div class="ccm-pager" class="ccm-pager" style="display:none"></div>`;
         }
 
         function bindManagerControls(box) {
@@ -2170,7 +2183,7 @@ function syncContainerStyles(target) {
                   <div class="ccm-modal-head">
                     <span><i class="fa-solid fa-address-book"></i> CHAR·MANAGER <span class="ccm-sys-ver">v${VERSION}</span><i class="ccm-blink">▊</i></span>
                     <span class="ccm-head-tools">
-                      <span id="ccm_count" class="ccm-count"></span>
+                      <span class="ccm-count ccm-sys-count" class="ccm-count"></span>
                       <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
                       <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
                       <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
@@ -2220,7 +2233,7 @@ function syncContainerStyles(target) {
                     <button type="button" class="ccm-back-btn" id="ccm_back_chat" title="返回聊天（收起角色面板）"><i class="fa-solid fa-chevron-left"></i><span>返回</span></button>
                     <span class="ccm-embed-title"><i class="fa-solid fa-address-book"></i> CHAR·MANAGER</span>
                     <span class="ccm-head-tools">
-                      <span id="ccm_count" class="ccm-count"></span>
+                      <span class="ccm-count ccm-sys-count" class="ccm-count"></span>
                       <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
                       <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
@@ -2271,9 +2284,9 @@ function syncContainerStyles(target) {
         function setupNativeTakeover() {
             mountEmbed();
             $(document).on('click.ccmtakeover', '#rightNavDrawerIcon, #rightNavHolder .drawer-toggle', () => {
-                if (!$('#ccm_embed').length) {
-                    mountEmbed();
-                }
+                if (!$('#ccm_embed').length) mountEmbed();
+                // 每次打开抽屉时，强制刷新列表，防止酒馆初期加载缓慢导致首次空屏
+                setTimeout(() => { renderFilters(); renderGrid(); }, 10);
             });
         }
 
