@@ -2903,3 +2903,219 @@ html body #ccm_embed .ccm-back-btn:hover {
     will-change: transform, opacity !important;
     transform: translateZ(0) !important;
 }
+
+
+/* ============================================================
+   v4.5.0 真动态配色 + 亮色搜索栏修复 + 紧凑快捷工具栏
+   (True Dynamic Palette / Light Search Fix / Compact Quickbar)
+   ============================================================ */
+
+/* ---------- 1. 面板整体动态配色 ---------- */
+html body #ccm_embed,
+html body .ccm-embed-box,
+html body .ccm-manager-box,
+html body .ccm-modal-box,
+html body #ccm_detail_modal {
+    background: var(--ccm-adaptive-bg) !important;
+    color: var(--ccm-adaptive-fg) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg) !important;
+    border-color: var(--ccm-adaptive-border) !important;
+}
+
+/* ---------- 2. 搜索栏：动态自适应 + 高对比 ---------- */
+html body #ccm_search,
+html body .ccm-search,
+html body input#ccm_search,
+html body input.ccm-search {
+    background: var(--ccm-adaptive-input-bg, #ffffff) !important;
+    background-color: var(--ccm-adaptive-input-bg, #ffffff) !important;
+    color: var(--ccm-adaptive-input-fg, #0f172a) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-input-fg, #0f172a) !important;
+    border: 1px solid var(--ccm-adaptive-border) !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    caret-color: var(--ccm-adaptive-accent) !important;
+    opacity: 1 !important;
+}
+
+html body #ccm_search:focus,
+html body .ccm-search:focus {
+    border-color: var(--ccm-adaptive-border-hi) !important;
+    box-shadow: 0 0 0 2px var(--ccm-adaptive-border-hi) !important;
+    outline: none !important;
+}
+
+html body #ccm_search::placeholder,
+html body .ccm-search::placeholder {
+    color: var(--ccm-adaptive-fg-dim) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg-dim) !important;
+    opacity: 0.8 !important;
+}
+
+html body .ccm-search-icon,
+html body .ccm-search-clear {
+    color: var(--ccm-adaptive-fg-dim) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg-dim) !important;
+}
+
+/* 白色主题兜底硬保障（引擎变量未生效时依然纯白高对比） */
+html body .ccm-theme-light #ccm_search,
+html body.light-theme #ccm_search,
+html body .ccm-theme-light .ccm-search {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+html body .ccm-theme-light #ccm_search::placeholder,
+html body .ccm-theme-light .ccm-search::placeholder {
+    color: #64748b !important;
+    -webkit-text-fill-color: #64748b !important;
+}
+
+/* ---------- 3. 卡片网格动态配色 ---------- */
+html body .ccm-tile {
+    background: var(--ccm-adaptive-card-bg) !important;
+    border: 1px solid var(--ccm-adaptive-border) !important;
+}
+
+html body .ccm-tile:hover {
+    background: var(--ccm-adaptive-card-hover) !important;
+    border-color: var(--ccm-adaptive-border-hi) !important;
+}
+
+html body .ccm-tile-name {
+    background: var(--ccm-adaptive-bg) !important;
+    color: var(--ccm-adaptive-fg) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg) !important;
+    font-weight: 600 !important;
+    border-top: 1px solid var(--ccm-adaptive-border) !important;
+}
+
+/* ---------- 4. 快捷工具栏：一排 4 个（窄屏 3 个），高度紧缩 ---------- */
+html body #ccm_quickbar,
+html body .ccm-quickbar,
+html body #ccm_embed #ccm_quickbar,
+html body #ccm_embed .ccm-quickbar,
+html body .ccm-manager-box #ccm_quickbar,
+html body .ccm-manager-box .ccm-quickbar {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+    padding: 5px 10px 3px !important;
+    margin: 2px 0 !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+@media (max-width: 380px) {
+    html body #ccm_quickbar,
+    html body .ccm-quickbar {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+html body #ccm_quickbar .ccm-qbtn,
+html body .ccm-quickbar .ccm-qbtn,
+html body #ccm_embed .ccm-qbtn,
+html body .ccm-manager-box .ccm-qbtn,
+html body .ccm-qbtn {
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 0 6px !important;
+    margin: 0 !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100% !important;
+    background: var(--ccm-adaptive-chip-bg) !important;
+    border: 1px solid var(--ccm-adaptive-border) !important;
+    color: var(--ccm-adaptive-fg) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg) !important;
+}
+
+html body #ccm_quickbar .ccm-qbtn:hover,
+html body .ccm-quickbar .ccm-qbtn:hover,
+html body .ccm-qbtn:hover {
+    background: var(--ccm-adaptive-card-hover) !important;
+    border-color: var(--ccm-adaptive-border-hi) !important;
+}
+
+html body #ccm_quickbar .ccm-qbtn i,
+html body .ccm-quickbar .ccm-qbtn i,
+html body .ccm-qbtn i {
+    color: var(--ccm-adaptive-accent) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-accent) !important;
+    font-size: 0.88rem !important;
+    flex-shrink: 0 !important;
+}
+
+html body #ccm_quickbar .ccm-qbtn span,
+html body .ccm-quickbar .ccm-qbtn span,
+html body .ccm-qbtn span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 0.78rem !important;
+    color: var(--ccm-adaptive-fg) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg) !important;
+}
+
+/* 折叠状态 */
+html body #ccm_quickbar.ccm-quickbar-collapsed,
+html body .ccm-quickbar-collapsed {
+    display: flex !important;
+    justify-content: flex-end !important;
+    padding: 2px 10px !important;
+    margin: 2px 0 !important;
+    min-height: 28px !important;
+}
+
+html body .ccm-qbtn-unfold {
+    width: auto !important;
+    margin-left: auto !important;
+    text-align: right !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 10px !important;
+    font-size: 0.78rem !important;
+}
+
+/* ---------- 5. 标签 / 文件夹 Chip 动态着色 ---------- */
+html body .ccm-fchip,
+html body .ccm-tchip,
+html body .ccm-mode-btn {
+    background: var(--ccm-adaptive-chip-bg) !important;
+    border: 1px solid var(--ccm-adaptive-border) !important;
+    color: var(--ccm-adaptive-fg-muted) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg-muted) !important;
+}
+
+html body .ccm-fchip-on,
+html body .ccm-tchip-on,
+html body .ccm-mode-on {
+    background: var(--ccm-adaptive-accent) !important;
+    border-color: var(--ccm-adaptive-accent) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* ---------- 6. 返回按钮动态主色 ---------- */
+html body #ccm_embed .ccm-back-btn,
+html body .ccm-embed-box .ccm-back-btn {
+    background: var(--ccm-adaptive-accent) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+}

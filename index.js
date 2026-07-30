@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.4.0';
+    const VERSION = '4.5.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1525,59 +1525,182 @@
 
 
         /* ---------------- 高对比度自适应调色系统 (Adaptive Theme Engine v4.2.0) ---------------- */
-        function applyAdaptiveTheme() {
-            const root = document.documentElement;
-            const bodyStyle = getComputedStyle(document.body);
-            const rootStyle = getComputedStyle(root);
-
-            // 1. 提取酒馆强调色，若提取失败则使用高质量默认色彩
-            let emColor = rootStyle.getPropertyValue('--SmartThemeEmColor').trim()
-                || bodyStyle.getPropertyValue('--SmartThemeEmColor').trim();
-            if (!emColor || emColor === 'none' || emColor === 'transparent') {
-                emColor = '#22d3ee';
-            }
-
-            // 2. 精确判定浅色/暗色模式（绝不混色打码）
-            let isLight = false;
-            if (settings.theme === 'light') {
-                isLight = true;
-            } else if (settings.theme === 'dark') {
-                isLight = false;
-            } else {
-                // auto 模式：显式判断酒馆与系统主题，优先遵循酒馆 light-theme 标记
-                if (document.body.classList.contains('light-theme') || $('body').hasClass('ccm-theme-light')) {
-                    isLight = true;
-                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-                    isLight = true;
+        /* ============================================================
+           v4.5.0 真动态配色引擎 (True Dynamic Adaptive Theme Engine)
+           ============================================================ */
+        const ColorEngine = {
+            parseColor(colorStr) {
+                if (!colorStr) return null;
+                colorStr = colorStr.trim().toLowerCase();
+                if (colorStr === 'transparent' || colorStr === 'none') return null;
+                if (colorStr.startsWith('#')) {
+                    let hex = colorStr.slice(1);
+                    if (hex.length === 3 || hex.length === 4) hex = hex.split('').map(c => c + c).join('');
+                    if (hex.length === 6) {
+                        return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16), a: 1 };
+                    }
+                    if (hex.length === 8) {
+                        return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16), a: parseInt(hex.slice(6, 8), 16) / 255 };
+                    }
                 }
+                const rgbMatch = colorStr.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)/);
+                if (rgbMatch) {
+                    return { r: parseInt(rgbMatch[1], 10), g: parseInt(rgbMatch[2], 10), b: parseInt(rgbMatch[3], 10), a: rgbMatch[4] !== undefined ? parseFloat(rgbMatch[4]) : 1 };
+                }
+                try {
+                    const temp = document.createElement('div');
+                    temp.style.color = colorStr;
+                    document.body.appendChild(temp);
+                    const comp = getComputedStyle(temp).color;
+                    document.body.removeChild(temp);
+                    const m = comp.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)/);
+                    if (m) {
+                        return { r: parseInt(m[1], 10), g: parseInt(m[2], 10), b: parseInt(m[3], 10), a: m[4] !== undefined ? parseFloat(m[4]) : 1 };
+                    }
+                } catch (e) { /* ignore */ }
+                return null;
+            },
+            getLuminance(rgb) {
+                if (!rgb) return 0.1;
+                const normalize = (v) => {
+                    const c = v / 255;
+                    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+                };
+                return 0.2126 * normalize(rgb.r) + 0.7152 * normalize(rgb.g) + 0.0722 * normalize(rgb.b);
+            },
+            mix(rgb1, rgb2, weight) {
+                const w = Math.max(0, Math.min(1, weight));
+                return {
+                    r: Math.round(rgb1.r * (1 - w) + rgb2.r * w),
+                    g: Math.round(rgb1.g * (1 - w) + rgb2.g * w),
+                    b: Math.round(rgb1.b * (1 - w) + rgb2.b * w),
+                    a: (rgb1.a !== undefined ? rgb1.a : 1) * (1 - w) + (rgb2.a !== undefined ? rgb2.a : 1) * w
+                };
+            },
+            toRgbaStr(rgb, alphaOverride) {
+                const a = alphaOverride !== undefined ? alphaOverride : (rgb.a !== undefined ? rgb.a : 1);
+                return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${Number(a.toFixed(3))})`;
+            },
+            toHexStr(rgb) {
+                const to2 = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
+                return `#${to2(rgb.r)}${to2(rgb.g)}${to2(rgb.b)}`;
             }
+        };
 
-            // 3. 挂载明确的主题类名（彻底清除模糊与混色）
-            const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
-            const targets = $(sel);
+        function applyAdaptiveTheme() {
+            try {
+                const root = document.documentElement;
+                const bodyStyle = getComputedStyle(document.body);
+                const rootStyle = getComputedStyle(root);
+                const getVar = (name) => (rootStyle.getPropertyValue(name) || bodyStyle.getPropertyValue(name) || '').trim();
 
-            targets.toggleClass('ccm-theme-light', isLight);
-            targets.toggleClass('ccm-theme-dark', !isLight);
+                // 1. 抓取酒馆核心色彩
+                const emRgb = ColorEngine.parseColor(getVar('--SmartThemeEmColor'))
+                    || ColorEngine.parseColor(getVar('--SmartThemeQuoteColor'))
+                    || ColorEngine.parseColor(getVar('--SmartThemeBorderColor'));
+                const bgRgb = ColorEngine.parseColor(getVar('--SmartThemePanelColor'))
+                    || ColorEngine.parseColor(getVar('--SmartThemeChatBgColor'))
+                    || ColorEngine.parseColor(getVar('--SmartThemeBodyColor'))
+                    || ColorEngine.parseColor(getVar('--SmartThemeBgColor'))
+                    || ColorEngine.parseColor(bodyStyle.backgroundColor);
+                const bgLum = bgRgb ? ColorEngine.getLuminance(bgRgb) : 0.1;
 
-            if (settings.takeover) {
-                $('body').toggleClass('ccm-theme-light', isLight);
-                $('body').toggleClass('ccm-theme-dark', !isLight);
-            } else {
-                $('body').removeClass('ccm-theme-light ccm-theme-dark');
-            }
+                // 2. 精确判定浅色/暗色基调
+                let isLight = false;
+                if (settings.theme === 'light') {
+                    isLight = true;
+                } else if (settings.theme === 'dark') {
+                    isLight = false;
+                } else {
+                    if (document.body.classList.contains('light-theme') || $('body').hasClass('ccm-theme-light')) {
+                        isLight = true;
+                    } else if (bgLum > 0.5) {
+                        isLight = true;
+                    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                        isLight = true;
+                    }
+                }
 
-            // 4. 写入高对比度 CSS 变量，绝不与背景混淆
-            document.documentElement.style.setProperty('--ccm-adaptive-accent', emColor);
-            if (isLight) {
-                document.documentElement.style.setProperty('--ccm-adaptive-bg', '#ffffff');
-                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', '#f8fafc');
-                document.documentElement.style.setProperty('--ccm-adaptive-fg', '#0f172a');
-                document.documentElement.style.setProperty('--ccm-adaptive-border', '#cbd5e1');
-            } else {
-                document.documentElement.style.setProperty('--ccm-adaptive-bg', '#0f1522');
-                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', '#1e293b');
-                document.documentElement.style.setProperty('--ccm-adaptive-fg', '#f8fafc');
-                document.documentElement.style.setProperty('--ccm-adaptive-border', 'rgba(255, 255, 255, 0.15)');
+                // 3. 从酒馆主题基因色派生完整动态调色板
+                let accentRgb = emRgb || (isLight ? { r: 2, g: 132, b: 199, a: 1 } : { r: 34, g: 211, b: 238, a: 1 });
+                const accentLum = ColorEngine.getLuminance(accentRgb);
+                if (isLight && accentLum > 0.7) {
+                    accentRgb = ColorEngine.mix(accentRgb, { r: 15, g: 23, b: 42, a: 1 }, 0.35);
+                } else if (!isLight && accentLum < 0.15) {
+                    accentRgb = ColorEngine.mix(accentRgb, { r: 248, g: 250, b: 252, a: 1 }, 0.45);
+                }
+                const accentStr = ColorEngine.toHexStr(accentRgb);
+                const accent2Str = ColorEngine.toHexStr(ColorEngine.mix(accentRgb, isLight ? { r: 99, g: 102, b: 241, a: 1 } : { r: 129, g: 140, b: 248, a: 1 }, 0.4));
+                const baseBgRgb = bgRgb || (isLight ? { r: 255, g: 255, b: 255, a: 1 } : { r: 15, g: 21, b: 34, a: 1 });
+
+                let panelBg, cardBg, cardHover, inputBg, inputFg, fgMain, fgMuted, fgDim, borderLine, borderHi, chipBg;
+                if (isLight) {
+                    panelBg = ColorEngine.toRgbaStr(ColorEngine.mix(baseBgRgb, { r: 255, g: 255, b: 255, a: 1 }, 0.85), 0.98);
+                    cardBg = ColorEngine.toRgbaStr(ColorEngine.mix(baseBgRgb, { r: 248, g: 250, b: 252, a: 1 }, 0.9), 1);
+                    cardHover = ColorEngine.toRgbaStr(ColorEngine.mix(ColorEngine.mix(baseBgRgb, { r: 248, g: 250, b: 252, a: 1 }, 0.9), accentRgb, 0.08), 1);
+                    inputBg = '#ffffff';
+                    inputFg = '#0f172a';
+                    fgMain = '#0f172a';
+                    fgMuted = '#475569';
+                    fgDim = '#64748b';
+                    borderLine = 'rgba(0, 0, 0, 0.15)';
+                    borderHi = ColorEngine.toRgbaStr(accentRgb, 0.45);
+                    chipBg = ColorEngine.toRgbaStr(ColorEngine.mix({ r: 241, g: 245, b: 249, a: 1 }, baseBgRgb, 0.5), 1);
+                } else {
+                    panelBg = ColorEngine.toRgbaStr(ColorEngine.mix(baseBgRgb, { r: 15, g: 21, b: 34, a: 1 }, 0.6), 0.92);
+                    cardBg = ColorEngine.toRgbaStr(ColorEngine.mix(baseBgRgb, { r: 30, g: 41, b: 59, a: 1 }, 0.5), 0.85);
+                    cardHover = ColorEngine.toRgbaStr(ColorEngine.mix(ColorEngine.mix(baseBgRgb, { r: 30, g: 41, b: 59, a: 1 }, 0.5), accentRgb, 0.15), 0.95);
+                    inputBg = ColorEngine.toRgbaStr(ColorEngine.mix(baseBgRgb, { r: 15, g: 23, b: 42, a: 1 }, 0.8), 0.85);
+                    inputFg = '#f8fafc';
+                    fgMain = '#f8fafc';
+                    fgMuted = '#cbd5e1';
+                    fgDim = '#94a3b8';
+                    borderLine = 'rgba(255, 255, 255, 0.14)';
+                    borderHi = ColorEngine.toRgbaStr(accentRgb, 0.55);
+                    chipBg = 'rgba(255, 255, 255, 0.08)';
+                }
+
+                // 4. 挂载主题类名与全套动态 CSS 变量
+                const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
+                const targets = $(sel);
+                targets.toggleClass('ccm-theme-light', isLight);
+                targets.toggleClass('ccm-theme-dark', !isLight);
+                if (settings.takeover) {
+                    $('body').toggleClass('ccm-theme-light', isLight);
+                    $('body').toggleClass('ccm-theme-dark', !isLight);
+                } else {
+                    $('body').removeClass('ccm-theme-light ccm-theme-dark');
+                }
+
+                const setVar = (prop, val) => document.documentElement.style.setProperty(prop, val);
+                setVar('--ccm-c1', accentStr);
+                setVar('--ccm-c2', accent2Str);
+                setVar('--ccm-adaptive-accent', accentStr);
+                setVar('--ccm-adaptive-accent-rgb', `${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}`);
+                setVar('--ccm-adaptive-bg', panelBg);
+                setVar('--ccm-adaptive-panel', panelBg);
+                setVar('--ccm-adaptive-card-bg', cardBg);
+                setVar('--ccm-adaptive-card-hover', cardHover);
+                setVar('--ccm-adaptive-fg', fgMain);
+                setVar('--ccm-adaptive-fg-muted', fgMuted);
+                setVar('--ccm-adaptive-fg-dim', fgDim);
+                setVar('--ccm-adaptive-border', borderLine);
+                setVar('--ccm-adaptive-border-hi', borderHi);
+                setVar('--ccm-adaptive-input-bg', inputBg);
+                setVar('--ccm-adaptive-input-fg', inputFg);
+                setVar('--ccm-adaptive-chip-bg', chipBg);
+                setVar('--ccm-grad', `linear-gradient(120deg, ${accentStr}, ${accent2Str})`);
+                setVar('--ccm-glass', isLight ? 'linear-gradient(165deg, rgba(0,0,0,0.04), rgba(0,0,0,0.01))' : 'linear-gradient(165deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))');
+                setVar('--ccm-line', borderLine);
+                setVar('--ccm-line-hi', borderHi);
+                setVar('--ccm-panel', panelBg);
+                setVar('--ccm-panel-solid', panelBg);
+                setVar('--ccm-fg', fgMain);
+                setVar('--ccm-fg-strong', fgMain);
+                setVar('--ccm-fg-muted', fgMuted);
+                setVar('--ccm-fg-dim', fgDim);
+            } catch (err) {
+                console.warn('[CCM ThemeEngine] Error applying theme:', err);
             }
         }
 
@@ -1614,7 +1737,7 @@ function syncContainerStyles(target) {
             const searchInput = box.find('#ccm_search');
             const searchClear = box.find('#ccm_search_clear');
             const syncClear = () => searchClear.toggleClass('ccm-show', !!searchInput.val());
-            searchInput.val(searchText).on('input', function () {
+            searchInput.val(searchText).on('keydown keyup', (e) => e.stopPropagation()).on('input', function () {
                 searchText = this.value;
                 syncClear();
                 // 防抖：角色多时每个按键都全量重绘会卡，尤其在手机上
@@ -1996,14 +2119,55 @@ function syncContainerStyles(target) {
 
         /* ---------------- 最近使用记录（监听聊天切换事件） ---------------- */
         function setupThemeListener() {
+            let lastThemeSig = '';
+            const checkThemeChanged = () => {
+                try {
+                    const rootStyle = getComputedStyle(document.documentElement);
+                    const bodyStyle = getComputedStyle(document.body);
+                    const sig = [
+                        rootStyle.getPropertyValue('--SmartThemeEmColor'),
+                        rootStyle.getPropertyValue('--SmartThemeQuoteColor'),
+                        rootStyle.getPropertyValue('--SmartThemeBodyColor'),
+                        rootStyle.getPropertyValue('--SmartThemeChatBgColor'),
+                        bodyStyle.backgroundColor,
+                        document.body.className
+                    ].join('|');
+                    if (sig !== lastThemeSig) {
+                        lastThemeSig = sig;
+                        applyAdaptiveTheme();
+                    }
+                } catch (e) { /* ignore */ }
+            };
             try {
                 const c = getCtx();
                 if (c && c.eventSource && c.event_types) {
                     if (c.event_types.SETTINGS_UPDATED) {
-                        c.eventSource.on(c.event_types.SETTINGS_UPDATED, () => applyAdaptiveTheme());
+                        c.eventSource.on(c.event_types.SETTINGS_UPDATED, () => setTimeout(checkThemeChanged, 50));
+                    }
+                    if (c.event_types.THEME_CHANGED) {
+                        c.eventSource.on(c.event_types.THEME_CHANGED, () => setTimeout(checkThemeChanged, 50));
                     }
                 }
             } catch (e) { /* ignore */ }
+            try {
+                const observer = new MutationObserver((mutations) => {
+                    for (const m of mutations) {
+                        if (m.type === 'attributes' && (m.attributeName === 'class' || m.attributeName === 'style' || m.attributeName === 'data-theme')) {
+                            checkThemeChanged();
+                            return;
+                        }
+                        if (m.type === 'childList') {
+                            checkThemeChanged();
+                            return;
+                        }
+                    }
+                });
+                if (document.body) observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style', 'data-theme'] });
+                if (document.documentElement) observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style', 'data-theme'] });
+                if (document.head) observer.observe(document.head, { childList: true, subtree: true, characterData: true });
+            } catch (e) { /* ignore */ }
+            setInterval(checkThemeChanged, 2000);
+            checkThemeChanged();
         }
 
         function setupRecentTracking() {
