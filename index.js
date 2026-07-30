@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '5.6.0';
+    const VERSION = '5.7.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -447,15 +447,21 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 setTimeout(closeCharDrawer, 50); // 双重保险，彻底压制原生侧边栏抢占
                 setTimeout(closeCharDrawer, 100); // 终极保险
 
-                // 4. 强行剥夺焦点，防止手机端自动弹起键盘遮挡阅读视线
+                // 4. 终极强行剥夺焦点，防自动弹起键盘遮挡阅读视线
                 const dropKeyboard = () => {
                     const ta = document.getElementById('send_textarea');
-                    if (ta) ta.blur();
+                    if (ta) {
+                        ta.blur();
+                        ta.setAttribute('readonly', 'readonly'); // 暂时设为只读防止 iOS Safari/Android Chrome 强制拉起
+                        setTimeout(() => ta.removeAttribute('readonly'), 500); // 半秒后恢复可写
+                    }
                     if (document.activeElement) document.activeElement.blur();
+                    window.focus();
                 };
                 dropKeyboard();
                 setTimeout(dropKeyboard, 50);
                 setTimeout(dropKeyboard, 150);
+                setTimeout(dropKeyboard, 300);
 
                 toastr.success('已切换到「' + esc(charName(ch)) + '」', '角色卡管理');
                 return true;

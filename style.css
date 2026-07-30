@@ -2231,3 +2231,25 @@ html body .ccm-detail-name-text {
 html body .ccm-detail-sec-text {
     color: #cbd5e1 !important;
 }
+
+/* ---------------- 详情页添加标签按钮修复 ---------------- */
+html body .ccm-tag-add {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 3px 8px !important;
+    border-radius: 8px !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    font-size: 0.85em !important;
+    cursor: pointer !important;
+    text-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+html body .ccm-tag-add:hover, html body .ccm-tag-add:active {
+    background-color: rgba(34, 211, 238, 0.15) !important;
+    border-color: rgba(34, 211, 238, 0.4) !important;
+    color: #38bdf8 !important;
+}
