@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.6.0';
+    const VERSION = '4.7.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -40,141 +40,18 @@
         }
         const settings = ctx.extensionSettings[MODULE];
 
-        /* ---- mobile layout enforcer ---- */
-        (function enforceMobileLayout() {
+                /* ---- 快捷栏 3/4 列布局注入（通用端轻量版，仅 CSS，无 DOM 观察器） ---- */
+        (function injectQuickbarLayout() {
             const css = `
-html body #ccm_embed,html body #ccm_embed.ccm-embed-box,html body .ccm-manager-box{
-  display:flex!important;flex-direction:column!important;min-height:0!important}
-html body .ccm-embed-head,html body .ccm-search-wrap,html body #ccm_quickbar,html body .ccm-quickbar,
-html body #ccm_modes,html body .ccm-modes,html body .ccm-modal-head,html body #ccm_pager,html body .ccm-pager,
-html body #ccm_batchbar,html body .ccm-batchbar{
-  flex:0 0 auto!important;flex-shrink:0!important;min-height:auto!important;max-height:none!important;
-  height:auto!important;overflow:visible!important;opacity:1!important;visibility:visible!important}
-html body #ccm_folderbar,html body .ccm-folderbar,html body #ccm_tagbar,html body .ccm-tagbar,html body .ccm-detail-folderrow{
-  display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;justify-content:flex-start!important;
-  align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important;
-  -webkit-overflow-scrolling:touch!important;touch-action:pan-x!important;width:100%!important;max-width:100%!important;
-  box-sizing:border-box!important;flex:0 0 auto!important;flex-shrink:0!important}
-html body .ccm-tchip,html body .ccm-fdchip{flex:0 0 auto!important;flex-shrink:0!important;white-space:nowrap!important}
-html body .ccm-quickbar,html body #ccm_quickbar,html body #ccm_embed #ccm_quickbar{
-  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:6px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
-  padding:6px 8px 4px!important}
-@media (min-width:500px){
-  html body .ccm-quickbar,html body #ccm_quickbar{grid-template-columns:repeat(4,minmax(0,1fr))!important}
-}
-html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{
-  grid-column:1 / -1!important;width:100%!important;justify-content:center!important}
-html body .ccm-qbtn,html body #ccm_quickbar .ccm-qbtn{
-  width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;
-  display:inline-flex!important;justify-content:center!important;align-items:center!important;
-  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
-  min-height:36px!important;height:auto!important;padding:6px 4px!important;font-size:0.81em!important;
-  line-height:1.2!important;flex:unset!important;border-radius:8px!important}
-html body .ccm-search-wrap{margin:8px 8px 0!important;padding:0!important}
-html body .ccm-search,html body #ccm_search{
-  min-height:38px!important;height:38px!important;font-size:0.92em!important;padding-left:34px!important;padding-right:34px!important}
-html body .ccm-modes,html body #ccm_modes{
-  display:flex!important;flex-wrap:wrap!important;gap:6px!important;padding:8px 8px 0!important}
-html body .ccm-fchip,html body .ccm-tchip,html body .ccm-fdchip{
-  min-height:32px!important;padding:4px 10px!important;font-size:0.83em!important}
-html body .ccm-folderbar,html body #ccm_folderbar{padding:6px 8px 0!important;min-height:36px!important}
-html body .ccm-grid,html body #ccm_grid,html body #ccm_embed #ccm_grid,html body #rm_characters_block.ccm-native-takeover #ccm_grid{
-  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  gap:6px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
-  flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;padding:6px 6px 10px!important}
-html body .ccm-tile{min-height:0!important}
-html body .ccm-tile-name{font-size:0.72em!important;-webkit-line-clamp:2!important;line-clamp:2!important;padding:4px 5px 5px!important}
-html body #ccm_embed,html body #rm_characters_block.ccm-native-takeover{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;overflow-x:hidden!important}
-html body .ccm-overlay{
-  position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  padding:max(12px,env(safe-area-inset-top,0px)) 10px max(12px,env(safe-area-inset-bottom,0px))!important;
-  z-index:2147483000!important;box-sizing:border-box!important}
-html body .ccm-detail-box,html body #ccm_detail_modal .ccm-detail-box{
-  display:flex!important;flex-direction:column!important;max-height:min(88dvh,calc(100vh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)))!important;
-  width:min(100vw - 12px,720px)!important;margin:0 auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important}
-html body .ccm-detail-box .ccm-modal-head,html body #ccm_detail_modal .ccm-modal-head{
-  position:sticky!important;top:0!important;z-index:5!important;flex:0 0 auto!important;background:var(--ccm-panel, #0f1522)!important;
-  min-height:44px!important;padding:10px 12px!important}
-html body .ccm-modal-close,html body .ccm-detail-box .ccm-modal-close{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  min-width:40px!important;min-height:40px!important;font-size:1.1em!important;opacity:1!important;visibility:visible!important;
-  pointer-events:auto!important}
-html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm-detail-sec-text,html body .ccm-detail-sec-text *{
-  opacity:1!important}
-@media (min-width:1200px){
-  html body .ccm-grid,html body #ccm_grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-}`;
-            let el = document.getElementById('ccm_mobile_layout_fix');
-            if (!el) {
-                el = document.createElement('style');
-                el.id = 'ccm_mobile_layout_fix';
-                document.head.appendChild(el);
-            }
+html body .ccm-quickbar,html body #ccm_quickbar{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+@media (min-width:500px){html body .ccm-quickbar,html body #ccm_quickbar{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+html body .ccm-quickbar .ccm-qbtn{width:100%!important;min-width:0!important;box-sizing:border-box!important;justify-content:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-height:38px!important;padding:6px 4px!important;flex:unset!important}
+html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;width:100%!important;justify-content:center!important}`;
+            let el = document.getElementById('ccm_quickbar_layout');
+            if (!el) { el = document.createElement('style'); el.id = 'ccm_quickbar_layout'; document.head.appendChild(el); }
             el.textContent = css;
-            const pin = () => {
-                const qCols = window.innerWidth >= 500 ? 'repeat(4, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))';
-                const gridCols = window.innerWidth >= 1200 ? 'repeat(3, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))';
-
-                const topSel = [
-                    '.ccm-embed-head', '.ccm-search-wrap', '#ccm_quickbar', '.ccm-quickbar',
-                    '#ccm_modes', '.ccm-modes', '.ccm-modal-head', '#ccm_pager', '.ccm-pager',
-                    '#ccm_batchbar', '.ccm-batchbar'
-                ].join(',');
-                document.querySelectorAll(topSel).forEach((n) => {
-                    n.style.setProperty('flex', '0 0 auto', 'important');
-                    n.style.setProperty('flex-shrink', '0', 'important');
-                    n.style.setProperty('min-height', 'auto', 'important');
-                    n.style.setProperty('max-height', 'none', 'important');
-                    n.style.setProperty('height', 'auto', 'important');
-                });
-                document.querySelectorAll('#ccm_folderbar, .ccm-folderbar, #ccm_tagbar, .ccm-tagbar, .ccm-detail-folderrow').forEach((n) => {
-                    n.style.setProperty('display', 'flex', 'important');
-                    n.style.setProperty('flex-direction', 'row', 'important');
-                    n.style.setProperty('flex-wrap', 'nowrap', 'important');
-                    n.style.setProperty('overflow-x', 'auto', 'important');
-                    n.style.setProperty('overflow-y', 'hidden', 'important');
-                    n.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-                    n.style.setProperty('touch-action', 'pan-x', 'important');
-                    n.style.setProperty('width', '100%', 'important');
-                    n.style.setProperty('max-width', '100%', 'important');
-                });
-                document.querySelectorAll('#ccm_quickbar, .ccm-quickbar').forEach((n) => {
-                    if (settings.quickbarCollapsed) return;
-                    n.style.setProperty('display', 'grid', 'important');
-                    n.style.setProperty('grid-template-columns', qCols, 'important');
-                    n.style.setProperty('width', '100%', 'important');
-                    n.style.setProperty('max-width', '100%', 'important');
-                    n.style.setProperty('gap', '6px', 'important');
-                    n.style.setProperty('padding', '6px 8px 4px', 'important');
-                });
-                document.querySelectorAll('#ccm_grid, .ccm-grid').forEach((n) => {
-                    n.style.setProperty('display', 'grid', 'important');
-                    n.style.setProperty('grid-template-columns', gridCols, 'important');
-                    n.style.setProperty('width', '100%', 'important');
-                    n.style.setProperty('max-width', '100%', 'important');
-                    n.style.setProperty('box-sizing', 'border-box', 'important');
-                    n.style.setProperty('flex', '1 1 auto', 'important');
-                    n.style.setProperty('min-height', '0', 'important');
-                    n.style.setProperty('overflow-y', 'auto', 'important');
-                    n.style.setProperty('gap', '6px', 'important');
-                });
-            };
-            window.__ccmPinLayout = pin;
-            pin();
-            const mo = new MutationObserver((muts) => {
-                for (const m of muts) {
-                    const t = m.target;
-                    if (t && t.nodeType === 1 && (t.closest && t.closest('#ccm_embed, .ccm-overlay, #ccm_grid, .ccm-quickbar'))) {
-                        clearTimeout(mo._t);
-                        mo._t = setTimeout(pin, 50);
-                        return;
-                    }
-                }
-            });
-            mo.observe(document.body, { childList: true, subtree: true });
-            window.addEventListener('resize', pin);
         })();
+
         if (!Array.isArray(settings.favs)) settings.favs = [];
         if (!Array.isArray(settings.recent)) settings.recent = [];
         if (!['recent', 'name', 'added'].includes(settings.sort)) settings.sort = 'recent';
@@ -183,6 +60,10 @@ html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm
         if (!['dark', 'light'].includes(settings.theme)) settings.theme = 'dark';
         if (!Array.isArray(settings.folders)) settings.folders = [];
         if (!settings.cardFolder || typeof settings.cardFolder !== 'object') settings.cardFolder = {};
+        // 标签屏蔽名单：删除过的嵌入标签不再被自动同步复活
+        if (!Array.isArray(settings.suppressedTags)) settings.suppressedTags = [];
+        settings.suppressedTags = settings.suppressedTags.map((s) => String(s || '').toLowerCase()).filter(Boolean);
+        if (!settings.suppressedCardTags || typeof settings.suppressedCardTags !== 'object') settings.suppressedCardTags = {};
         // 每页数量必须是 3 的倍数：网格固定一排三张，除不尽会在页尾留空位
         // （老版本存的 10/20/50 自动迁移到最接近的档位）
         const PAGE_SIZES = [12, 24, 48];
@@ -282,33 +163,79 @@ html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm
             return true;
         }
 
+        // 从卡片对象里剥掉嵌入标签（ch.data.tags / ch.tags），返回是否有命中
+        function stripEmbeddedTag(ch, nameLc) {
+            let hit = false;
+            if (ch.data && Array.isArray(ch.data.tags)) {
+                const before = ch.data.tags.length;
+                ch.data.tags = ch.data.tags.filter((t) => String(t || '').toLowerCase() !== nameLc);
+                if (ch.data.tags.length !== before) hit = true;
+            }
+            if (Array.isArray(ch.tags)) {
+                const before = ch.tags.length;
+                ch.tags = ch.tags.filter((t) => String(t || '').toLowerCase() !== nameLc);
+                if (ch.tags.length !== before) hit = true;
+            }
+            return hit;
+        }
+
+        // 把剥离后的嵌入标签数组写回卡片文件（ST 的 merge-attributes 对数组做整体替换）
+        async function persistEmbeddedTagRemoval(ch) {
+            try {
+                const payload = { avatar: ch.avatar };
+                let touched = false;
+                if (ch.data && Array.isArray(ch.data.tags)) { payload.data = { tags: ch.data.tags.slice() }; touched = true; }
+                if (Array.isArray(ch.tags)) { payload.tags = ch.tags.slice(); touched = true; }
+                if (!touched) return true;
+                const res = await fetchTimeout('/api/characters/merge-attributes', {
+                    method: 'POST',
+                    headers: ctx.getRequestHeaders(),
+                    body: JSON.stringify(payload),
+                }, 10000);
+                return res.ok;
+            } catch (e) {
+                console.warn('[角色卡管理] 嵌入标签写回卡片失败', e);
+                return false;
+            }
+        }
+
         function removeTagFromCard(ch, tagId) {
+            if (!ch || !ch.avatar) return false;
             const tm = tagMapRef();
             let changed = false;
-            if (tm && ch && ch.avatar && Array.isArray(tm[ch.avatar])) {
+            if (tm && Array.isArray(tm[ch.avatar])) {
                 const i = tm[ch.avatar].indexOf(tagId);
-                if (i >= 0) {
-                    tm[ch.avatar].splice(i, 1);
-                    changed = true;
-                }
+                if (i >= 0) { tm[ch.avatar].splice(i, 1); changed = true; }
             }
             const c = getCtx();
             const tagObj = c && Array.isArray(c.tags) ? c.tags.find((t) => t && t.id === tagId) : null;
-            if (tagObj && tagObj.name) {
-                const tagName = String(tagObj.name).toLowerCase();
-                if (ch.data && Array.isArray(ch.data.tags)) {
-                    const before = ch.data.tags.length;
-                    ch.data.tags = ch.data.tags.filter((t) => String(t || '').toLowerCase() !== tagName);
-                    if (ch.data.tags.length !== before) changed = true;
-                }
-                if (Array.isArray(ch.tags)) {
-                    const before = ch.tags.length;
-                    ch.tags = ch.tags.filter((t) => String(t || '').toLowerCase() !== tagName);
-                    if (ch.tags.length !== before) changed = true;
-                }
+            const nameLc = tagObj ? String(tagObj.name || '').toLowerCase() : '';
+            if (nameLc && stripEmbeddedTag(ch, nameLc)) {
+                // 卡内嵌标签：记入按卡屏蔽名单（防止重启后自动同步复活），并异步写回卡片文件
+                if (!Array.isArray(settings.suppressedCardTags[ch.avatar])) settings.suppressedCardTags[ch.avatar] = [];
+                if (!settings.suppressedCardTags[ch.avatar].includes(nameLc)) settings.suppressedCardTags[ch.avatar].push(nameLc);
+                save();
+                persistEmbeddedTagRemoval(ch).then((ok) => {
+                    if (!ok) toastr.warning('已在界面移除，写回卡片文件失败（重启后由屏蔽名单保持移除状态）', '角色卡管理');
+                });
+                changed = true;
             }
             if (changed) persistTags();
             return changed;
+        }
+
+        function buildTagObject(name) {
+            return {
+                id: (window.crypto && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : uid(),
+                name,
+                folder_type: 'NONE',
+                filter_state: 'UNDEFINED',
+                sort_order: Math.max(0, ...allGlobalTags().map((t) => Number(t && t.sort_order) || 0)) + 1,
+                is_hidden_on_character_card: false,
+                color: '',
+                color2: '',
+                create_date: Date.now(),
+            };
         }
 
         function createGlobalTag(name) {
@@ -316,19 +243,12 @@ html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm
             if (!c || !Array.isArray(c.tags)) return null;
             name = String(name || '').trim();
             if (!name) return null;
-            const exist = c.tags.find((t) => t && String(t.name).toLowerCase() === name.toLowerCase());
+            const k = name.toLowerCase();
+            // 手动创建同名标签 = 解除全局屏蔽
+            settings.suppressedTags = settings.suppressedTags.filter((x) => x !== k);
+            const exist = c.tags.find((t) => t && String(t.name).toLowerCase() === k);
             if (exist) return exist;
-            const tag = {
-                id: (window.crypto && typeof crypto.randomUUID === 'function') ? crypto.randomUUID() : uid(),
-                name,
-                folder_type: 'NONE',
-                filter_state: 'UNDEFINED',
-                sort_order: Math.max(0, ...c.tags.map((t) => Number(t && t.sort_order) || 0)) + 1,
-                is_hidden_on_character_card: false,
-                color: '',
-                color2: '',
-                create_date: Date.now(),
-            };
+            const tag = buildTagObject(name);
             c.tags.push(tag);
             persistTags();
             return tag;
@@ -339,27 +259,31 @@ html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm
             if (!c || !Array.isArray(c.tags)) return false;
             const idx = c.tags.findIndex((t) => t && t.id === tagId);
             if (idx < 0) return false;
-            const targetTag = c.tags[idx];
-            const tagName = targetTag ? String(targetTag.name || '').toLowerCase() : '';
+            const nameLc = String(c.tags[idx].name || '').toLowerCase();
             c.tags.splice(idx, 1);
-
             const tm = tagMapRef();
             if (tm) {
                 Object.keys(tm).forEach((k) => {
                     if (Array.isArray(tm[k])) tm[k] = tm[k].filter((x) => x !== tagId);
                 });
             }
-            if (tagName) {
+            if (nameLc) {
+                // 全局屏蔽：即使某些卡写回失败，重启后同步也不会再复活该标签
+                if (!settings.suppressedTags.includes(nameLc)) settings.suppressedTags.push(nameLc);
+                save();
+                const touched = [];
                 try {
-                    chars().forEach((ch) => {
-                        if (ch.data && Array.isArray(ch.data.tags)) {
-                            ch.data.tags = ch.data.tags.filter((t) => String(t || '').toLowerCase() !== tagName);
-                        }
-                        if (Array.isArray(ch.tags)) {
-                            ch.tags = ch.tags.filter((t) => String(t || '').toLowerCase() !== tagName);
-                        }
-                    });
+                    chars().forEach((ch) => { if (ch && stripEmbeddedTag(ch, nameLc)) touched.push(ch); });
                 } catch (e) { console.warn('[角色卡管理] 擦除卡片嵌入标签失败', e); }
+                if (touched.length) {
+                    (async () => {
+                        let fail = 0;
+                        for (const ch of touched) {
+                            if (!(await persistEmbeddedTagRemoval(ch))) fail++;
+                        }
+                        if (fail) toastr.warning(fail + ' 张卡的嵌入标签写回失败（界面已移除，重启后由屏蔽名单保持）', '角色卡管理');
+                    })();
+                }
             }
             persistTags();
             return true;
@@ -368,27 +292,53 @@ html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm
         function charTags(ch) {
             const c = getCtx();
             if (!c || !c.tagMap || !Array.isArray(c.tags) || !ch) return [];
-            if (!Array.isArray(c.tagMap[ch.avatar])) c.tagMap[ch.avatar] = [];
-
-            // 自动同步卡片内部嵌入的 tags (ch.data.tags 或 ch.tags)
-            const rawTags = [
-                ...(ch.data && Array.isArray(ch.data.tags) ? ch.data.tags : []),
-                ...(Array.isArray(ch.tags) ? ch.tags : []),
-            ];
-            if (rawTags.length > 0) {
-                rawTags.forEach((rt) => {
-                    const name = String(rt || '').trim();
-                    if (!name) return;
-                    let tagObj = c.tags.find((t) => t && String(t.name).toLowerCase() === name.toLowerCase());
-                    if (!tagObj) tagObj = createGlobalTag(name);
-                    if (tagObj && !c.tagMap[ch.avatar].includes(tagObj.id)) {
-                        c.tagMap[ch.avatar].push(tagObj.id);
-                    }
-                });
-            }
-
             const ids = c.tagMap[ch.avatar];
+            if (!Array.isArray(ids)) return [];
             return ids.map((id) => c.tags.find((t) => t && t.id === id)).filter(Boolean);
+        }
+
+        function embeddedTagNames(ch) {
+            const raw = [
+                ...(ch && ch.data && Array.isArray(ch.data.tags) ? ch.data.tags : []),
+                ...(ch && Array.isArray(ch.tags) ? ch.tags : []),
+            ];
+            const seen = new Set();
+            const out = [];
+            raw.forEach((t) => {
+                const s = String(t || '').trim();
+                const k = s.toLowerCase();
+                if (s && !seen.has(k)) { seen.add(k); out.push(s); }
+            });
+            return out;
+        }
+
+        /* 一次性批量同步：把卡片内嵌标签注册成酒馆全局标签并挂到 tagMap 上，
+           这样「傲娇 / MVU」这类卡内自带标签也能在管理页直接点 × 彻底删除。
+           节流执行，绝不在网格渲染热路径里逐卡写设置。 */
+        let lastEmbedSync = 0;
+        function syncEmbeddedTags(force) {
+            const now = Date.now();
+            if (!force && now - lastEmbedSync < 4000) return;
+            lastEmbedSync = now;
+            const c = getCtx();
+            if (!c || !Array.isArray(c.tags) || !c.tagMap) return;
+            const supGlobal = new Set(settings.suppressedTags);
+            let changed = false;
+            chars().forEach((ch) => {
+                if (!ch || !ch.avatar) return;
+                const names = embeddedTagNames(ch);
+                if (!names.length) return;
+                const supCard = new Set(settings.suppressedCardTags[ch.avatar] || []);
+                names.forEach((name) => {
+                    const k = name.toLowerCase();
+                    if (supGlobal.has(k) || supCard.has(k)) return;
+                    let t = c.tags.find((x) => x && String(x.name).toLowerCase() === k);
+                    if (!t) { t = buildTagObject(name); c.tags.push(t); changed = true; }
+                    if (!Array.isArray(c.tagMap[ch.avatar])) c.tagMap[ch.avatar] = [];
+                    if (!c.tagMap[ch.avatar].includes(t.id)) { c.tagMap[ch.avatar].push(t.id); changed = true; }
+                });
+            });
+            if (changed) persistTags();
         }
 
         function allTags() {
@@ -1182,6 +1132,9 @@ html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm
                 settings.favs = settings.favs.filter((a) => a !== ch.avatar);
                 settings.recent = settings.recent.filter((a) => a !== ch.avatar);
                 delete settings.cardFolder[ch.avatar];
+                delete settings.suppressedCardTags[ch.avatar];
+                const tmDel = tagMapRef();
+                if (tmDel && tmDel[ch.avatar]) { delete tmDel[ch.avatar]; persistTags(); }
                 save();
                 if (closeDetail) closeDetail();
                 const refreshed = await refreshCharList();
@@ -1385,6 +1338,7 @@ html body .ccm-detail-sec-title,html body .ccm-detail-sec-title *,html body .ccm
         }
 
         function renderFilters() {
+            syncEmbeddedTags();
             const modes = [
                 { key: 'all', icon: 'fa-layer-group', label: '全部' },
                 { key: 'fav', icon: 'fa-star', label: '收藏' },
@@ -2040,13 +1994,14 @@ function syncContainerStyles(target) {
             renderGrid();
         }
 
-        /* ---------------- 内置导入（自带文件选择器，支持 PNG / JSON / WEBP / CHARX / YAML） ---------------- */
+        /* ---------------- 内置导入（自带文件选择器，支持 PNG / JSON / CHARX / BYAF / YAML） ---------------- */
         let importBusy = false;
-        const importInput = $('<input type="file" accept=".png,.json,.webp,.charx,.yaml,.yml" multiple style="display:none">');
+        const importInput = $('<input type="file" accept=".png,.json,.charx,.byaf,.yaml,.yml" multiple style="display:none">');
         $('body').append(importInput);
 
         async function importOneFile(file) {
             const ext = (file.name.split('.').pop() || '').toLowerCase();
+            if (ext === 'webp') throw new Error('酒馆后端不支持 WEBP 直接导入（ST/TT 均无此解析器），请先转成 PNG 卡');
             const fd = new FormData();
             fd.append('avatar', file);
             fd.append('file_type', ext);
@@ -2132,7 +2087,7 @@ function syncContainerStyles(target) {
                 .attr('title', title)
                 .append($('<i class="fa-solid ' + icon + '"></i>'), $('<span></span>').text(label))
                 .on('click', fn).appendTo(bar);
-            mk('fa-file-import', '导入', '导入角色卡文件（PNG / JSON / WEBP / CHARX，可多选）', () => {
+            mk('fa-file-import', '导入', '导入角色卡文件（PNG / JSON / CHARX / BYAF，可多选）', () => {
                 if (importBusy) { toastr.info('正在导入中，请稍候…', '角色卡管理'); return; }
                 importInput.trigger('click');
             });
