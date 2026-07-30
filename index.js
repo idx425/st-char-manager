@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '5.4.0';
+    const VERSION = '5.5.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1723,7 +1723,7 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
             $('#ccm_tapchat').prop('checked', settings.tapAction === 'chat');
             $('#ccm_compact_setting').prop('checked', !!settings.compact);
             $('#ccm_quick_setting').prop('checked', !!settings.quickbarCollapsed);
-            $('#ccm_theme_setting').val(settings.theme === 'light' ? 'light' : 'dark');
+            
 
             $('.ccm-head-btn#ccm_compact_btn').toggleClass('ccm-head-on', !!settings.compact);
             $('.ccm-head-btn#ccm_theme_btn').toggleClass('ccm-head-on', settings.theme === 'light');
@@ -2182,6 +2182,8 @@ function syncContainerStyles(target) {
                 </div>`);
             makeOverlay('ccm_manager_modal', box);
             bindManagerControls(box);
+            renderFilters();
+            renderGrid();
         }
 
         /* ---------------- 原生角色面板：嵌入式接管（替换原生列表） ---------------- */
@@ -2229,6 +2231,8 @@ function syncContainerStyles(target) {
                 </div>`);
             host.append(embed);
             bindManagerControls(embed);
+            renderFilters();
+            renderGrid();
             embed.find('#ccm_back_chat').on('click', () => closeCharDrawer());
             embed.find('#ccm_toggle_edit_btn').on('click', () => {
                 const c = getCtx();
@@ -2431,14 +2435,7 @@ function syncContainerStyles(target) {
                 <input id="ccm_quick_setting" type="checkbox">
                 <span>默认折叠顶部快捷工具栏（腾出下方角色卡空间）</span>
               </label>
-              <div class="ccm-setting-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">
-                <span>主题风格：</span>
-                <select id="ccm_theme_setting" class="text_pole" style="width:auto;min-width:140px;height:36px;">
-                  <option value="auto">🌈 动态自适应 (Auto / 酒馆同色)</option>
-                  <option value="dark">暗色玻璃 (Dark)</option>
-                  <option value="light">浅色明亮 (Light)</option>
-                </select>
-              </div>
+
               <small class="ccm-note">快捷入口：输入框旁魔棒菜单 → 角色卡管理，或命令 /charman；按名称切换：/charswitch 角色名。文件夹、收藏与最近记录都存于本机酒馆设置中，不修改角色卡文件。</small>
             </div>
           </div>
@@ -2487,12 +2484,7 @@ function syncContainerStyles(target) {
                 if ($('#ccm_embed').length) renderQuickbar();
                 toastr.info(settings.quickbarCollapsed ? '快捷栏已默认折叠' : '快捷栏已默认展开', '角色卡管理');
             })
-            .on('change.ccm_settings', '#ccm_theme_setting', function () {
-                settings.theme = this.value;
-                save();
-                syncContainerStyles();
-                toastr.info(settings.theme === 'light' ? '已切换至浅色主题' : '已切换至暗色玻璃主题', '角色卡管理');
-            });
+            ;
 
         syncSettingsUI();
 

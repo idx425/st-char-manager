@@ -2178,3 +2178,14 @@ html body .ccm-qbtn-fold {
     transform: translateZ(0) !important;
     contain: layout style;
 }
+
+/* Fix back button visibility in dark theme */
+.ccm-back-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+.ccm-back-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
