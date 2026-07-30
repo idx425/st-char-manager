@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.8.0';
+    const VERSION = '4.9.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -423,7 +423,11 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 return false;
             }
             try {
-                // 优先模拟触发 DOM 点击，这是 SillyTavern 最稳定的切卡通道（避免部分酒馆版本的 openCharacterChat 在内部访问未初始化的 chat 变量而抛出 TypeError: Cannot set properties of undefined (setting 'chat')）
+                // 立即收起抽屉面板，让用户无感秒进聊天界面
+                closeCharDrawer();
+                recordRecent(ch.avatar);
+
+                // 异步触发切卡
                 const domEl = $(`#rm_print_characters_block .character_select[chid="${idx}"]`);
                 if (domEl.length) {
                     domEl.trigger('click');
@@ -434,9 +438,6 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 } else {
                     throw new Error('未找到角色元素，且当前酒馆版本不支持 API 切卡');
                 }
-                recordRecent(ch.avatar);
-                // 切卡后收起右侧面板，直接回到这张卡的聊天界面（否则还停在背面/列表里）
-                closeCharDrawer();
                 toastr.success('已切换到「' + esc(charName(ch)) + '」', '角色卡管理');
                 return true;
             } catch (err) {
@@ -987,7 +988,7 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
 
             const btns = box.find('.ccm-detail-btns');
             $('<button class="menu_button ccm-btn ccm-btn-primary"><i class="fa-solid fa-comment"></i> 开始聊天</button>')
-                .on('click', async () => { close(); closeManager(); await switchToChar(ch); }).appendTo(btns);
+                .on('click', () => { close(); closeManager(); switchToChar(ch); }).appendTo(btns);
             $('<button class="menu_button ccm-btn"><i class="fa-solid fa-star"></i> 收藏</button>')
                 .each(function () { updateFavBtn($(this), ch); })
                 .on('click', function () { toggleFav(ch); updateFavBtn($(this), ch); renderGrid(); }).appendTo(btns);
@@ -1264,7 +1265,7 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 // 防误触模式：点卡面先看详情，从详情里点「开始聊天」
                 if (settings.tapAction === 'detail') { openDetail(ch); return; }
                 closeManager();
-                await switchToChar(ch);
+                switchToChar(ch);
             });
             tile.on('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tile.trigger('click'); } });
             return tile;
@@ -2108,7 +2109,7 @@ function syncContainerStyles(target) {
                 if (!list.length) { toastr.warning('当前筛选没有角色卡'); return; }
                 const ch = list[Math.floor(Math.random() * list.length)];
                 closeManager();
-                await switchToChar(ch);
+                switchToChar(ch);
             });
             mk('fa-clock-rotate-left', '继续上次', '一键回到上一个聊过的角色', async () => {
                 const cur = curAvatar();
@@ -2116,7 +2117,7 @@ function syncContainerStyles(target) {
                 const ch = a && chars().find((c) => c.avatar === a);
                 if (!ch) { toastr.warning('还没有可回去的最近角色'); return; }
                 closeManager();
-                await switchToChar(ch);
+                switchToChar(ch);
             });
             mk('fa-box-archive', '备份筛选', '把当前筛选结果全部导出为 PNG 角色卡', async () => {
                 const list = filteredChars();
@@ -2177,19 +2178,18 @@ function syncContainerStyles(target) {
         function closeCharDrawer() {
             const panel = $('#right-nav-panel');
             if (!panel.length || !panel.hasClass('openDrawer')) return;
-            // 同步 ST 内部视图状态标记，防止开合逻辑死锁
             if (panel[0].dataset.menuType === 'characters') {
                 panel[0].dataset.menuType = '';
             }
+            // 极速收起：先立即切换 CSS 类名，避免等待 JQuery 事件链和过度动画
+            panel.removeClass('openDrawer').addClass('closedDrawer');
+            $('#rightNavDrawerIcon').removeClass('openIcon').addClass('closedIcon');
             const toggle = $('.drawer-toggle').filter(function () {
                 return $(this).parent().find('#right-nav-panel').length > 0;
             }).first();
             if (toggle.length) {
                 toggle.trigger('click');
-                if (!panel.hasClass('openDrawer')) return;
             }
-            panel.toggleClass('closedDrawer openDrawer');
-            $('#rightNavDrawerIcon').toggleClass('closedIcon openIcon');
         }
 
         function mountEmbed() {
