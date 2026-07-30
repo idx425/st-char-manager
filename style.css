@@ -2639,3 +2639,118 @@ html body #ccm_quickbar .ccm-qbtn {
 html body .ccm-head-btn {
     padding: 2px 4px !important;
 }
+
+
+/* 排序切换按钮始终可见，不被挤掉 */
+html body .ccm-fchip-sort {
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+
+html body #ccm_modes,
+html body .ccm-modes {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none !important;
+}
+
+
+/* ============================================================
+   v4.0.2 HEADER RETURN BUTTON, TOUCH TARGET & EDIT TOGGLE FIXES
+   ============================================================ */
+
+/* 头部左侧边距调整，防止左侧按钮被面板边缘或遮罩遮挡吞掉 */
+html body .ccm-embed-head,
+html body #ccm_embed .ccm-embed-head {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+/* 返回按钮：加大触控区域与间距，给予独立凸显背景 */
+html body .ccm-back-chat,
+html body #ccm_back_chat {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    margin-right: 6px !important;
+    border-radius: 6px !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: var(--ccm-c1, #22d3ee) !important;
+    cursor: pointer !important;
+    font-size: 1.1em !important;
+    flex-shrink: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+html body .ccm-back-chat:hover,
+html body #ccm_back_chat:hover {
+    background: rgba(34, 211, 238, 0.25) !important;
+    transform: scale(1.08) !important;
+}
+
+/* 切换编辑/列表按钮图标样式 */
+#ccm_toggle_edit_btn {
+    color: var(--ccm-c2, #818cf8) !important;
+}
+
+#ccm_toggle_edit_btn:hover {
+    color: #ffffff !important;
+}
+
+
+/* ============================================================
+   v4.1.0 ADAPTIVE COLOR ENGINE & SYSTEM THEME AUTO-MATCH
+   ============================================================ */
+
+/* 1. 动态自适应主题颜色变量继承 */
+:root {
+    --ccm-adaptive-accent: #22d3ee;
+    --ccm-adaptive-bg: rgba(15, 21, 34, 0.92);
+    --ccm-adaptive-card-bg: rgba(30, 41, 59, 0.72);
+    --ccm-adaptive-fg: #f3f7ff;
+    --ccm-adaptive-border: rgba(255, 255, 255, 0.12);
+}
+
+/* 2. 主主题色覆盖与平滑过渡 */
+#ccm_embed,
+.ccm-embed-box,
+.ccm-modal-box,
+.ccm-settings {
+    transition: background-color 0.25s ease, color 0.25s ease !important;
+}
+
+/* 动态强调色套用到图标高亮、按钮焦点与微亮边框 */
+.ccm-grad-icon,
+.ccm-embed-title > i.fa-solid,
+.ccm-back-chat {
+    color: var(--ccm-adaptive-accent) !important;
+}
+
+.ccm-btn-primary,
+.ccm-fchip-on,
+.ccm-fdchip-on,
+.ccm-tchip-on {
+    border-color: var(--ccm-adaptive-accent) !important;
+}
+
+/* 浅色与暗色自适应细节高对比度调优 */
+html body .ccm-theme-light .ccm-tile,
+html body .ccm-theme-light .ccm-modal-box,
+html body .ccm-theme-light #ccm_embed {
+    background: var(--ccm-adaptive-bg) !important;
+    color: var(--ccm-adaptive-fg) !important;
+}
+
+html body .ccm-theme-light .ccm-tile-name {
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: #0f172a !important;
+    font-weight: 600 !important;
+}
+
+html body .ccm-theme-dark .ccm-tile-name {
+    background: rgba(15, 23, 42, 0.85) !important;
+    color: #f8fafc !important;
+}

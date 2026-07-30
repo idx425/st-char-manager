@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.0.1';
+    const VERSION = '4.1.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1521,6 +1521,68 @@
             }
         }
 
+
+        /* ---------------- 动态调色系统 (Adaptive Theme Engine v4.1.0) ---------------- */
+        function applyAdaptiveTheme() {
+            const root = document.documentElement;
+            const bodyStyle = getComputedStyle(document.body);
+            const rootStyle = getComputedStyle(root);
+
+            // 1. 获取酒馆主题强调色 (--SmartThemeEmColor)
+            let emColor = rootStyle.getPropertyValue('--SmartThemeEmColor').trim()
+                || bodyStyle.getPropertyValue('--SmartThemeEmColor').trim();
+            if (!emColor || emColor === 'none') emColor = '#22d3ee';
+
+            // 2. 获取背景着色 (--SmartThemeBlurTintColor / --SmartThemeBodyColor)
+            let bgTintColor = rootStyle.getPropertyValue('--SmartThemeBlurTintColor').trim()
+                || rootStyle.getPropertyValue('--SmartThemeBodyColor').trim()
+                || bodyStyle.backgroundColor;
+
+            // 3. 自动判断明暗（Smart Light / Dark Detection）
+            let isLight = (settings.theme === 'light');
+            if (settings.theme === 'auto' || !settings.theme) {
+                if (document.body.classList.contains('light-theme') || $('body').hasClass('ccm-theme-light')) {
+                    isLight = true;
+                } else {
+                    const match = bgTintColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                    if (match) {
+                        const r = parseInt(match[1], 10), g = parseInt(match[2], 10), b = parseInt(match[3], 10);
+                        if ((r * 299 + g * 587 + b * 114) / 1000 > 140) isLight = true;
+                    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                        isLight = true;
+                    }
+                }
+            }
+
+            // 4. 将计算后的主色调与自适应类挂载至容器与 body
+            const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
+            const targets = $(sel);
+
+            targets.toggleClass('ccm-theme-light', isLight);
+            targets.toggleClass('ccm-theme-dark', !isLight);
+
+            if (settings.takeover) {
+                $('body').toggleClass('ccm-theme-light', isLight);
+                $('body').toggleClass('ccm-theme-dark', !isLight);
+            } else {
+                $('body').removeClass('ccm-theme-light ccm-theme-dark');
+            }
+
+            // 注入动态 CSS 变量
+            document.documentElement.style.setProperty('--ccm-adaptive-accent', emColor);
+            if (isLight) {
+                document.documentElement.style.setProperty('--ccm-adaptive-bg', 'rgba(248, 250, 252, 0.94)');
+                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', 'rgba(255, 255, 255, 0.88)');
+                document.documentElement.style.setProperty('--ccm-adaptive-fg', '#0f172a');
+                document.documentElement.style.setProperty('--ccm-adaptive-border', 'rgba(0, 0, 0, 0.12)');
+            } else {
+                document.documentElement.style.setProperty('--ccm-adaptive-bg', 'rgba(15, 21, 34, 0.92)');
+                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', 'rgba(30, 41, 59, 0.72)');
+                document.documentElement.style.setProperty('--ccm-adaptive-fg', '#f3f7ff');
+                document.documentElement.style.setProperty('--ccm-adaptive-border', 'rgba(255, 255, 255, 0.12)');
+            }
+        }
+
         function syncContainerStyles(target) {
             const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
             const el = (target && target.length) ? $(sel).add(target) : $(sel);
@@ -1530,12 +1592,7 @@
             el.toggleClass('ccm-quickbar-collapsed', !!settings.quickbarCollapsed);
             $('#ccm_quickbar').toggleClass('ccm-quickbar-collapsed', !!settings.quickbarCollapsed);
 
-            if (settings.takeover) {
-                $('body').toggleClass('ccm-theme-light', settings.theme === 'light');
-                $('body').toggleClass('ccm-theme-dark', settings.theme !== 'light');
-            } else {
-                $('body').removeClass('ccm-theme-light ccm-theme-dark');
-            }
+            applyAdaptiveTheme();
             syncSettingsUI();
         }
 
@@ -1784,6 +1841,7 @@
                     <span class="ccm-head-tools">
                       <span id="ccm_count" class="ccm-count"></span>
                       <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-circle-half-stroke ccm-head-btn" id="ccm_theme_btn" title="切换深/浅色主题"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
+                      <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
                       <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
                     </span>
@@ -1833,6 +1891,21 @@
             host.append(embed);
             bindManagerControls(embed);
             embed.find('#ccm_back_chat').on('click', () => closeCharDrawer());
+            embed.find('#ccm_toggle_edit_btn').on('click', () => {
+                const c = getCtx();
+                const curMenu = (window.SillyTavern && SillyTavern.menu_type) || '';
+                if (curMenu === 'characters' || $('#rm_characters_block').is(':visible')) {
+                    // 切到背面/编辑页
+                    if (typeof c.select_rm_info === 'function') c.select_rm_info();
+                    else if (typeof select_selected_character === 'function') select_selected_character(c.characterId);
+                    else $('#rm_button_selected_ch').first().trigger('click');
+                    toastr.info('已切到卡片定义(背面)页，点顶部图标可随时切回', '角色卡管理');
+                } else {
+                    // 切回角色列表
+                    $('#rm_button_characters').first().trigger('click');
+                    toastr.info('已切回角色列表管理器', '角色卡管理');
+                }
+            });
             embed.find('#ccm_native_back').on('click', () => {
                 settings.takeover = false;
                 save();
@@ -1917,6 +1990,17 @@
         }
 
         /* ---------------- 最近使用记录（监听聊天切换事件） ---------------- */
+        function setupThemeListener() {
+            try {
+                const c = getCtx();
+                if (c && c.eventSource && c.event_types) {
+                    if (c.event_types.SETTINGS_UPDATED) {
+                        c.eventSource.on(c.event_types.SETTINGS_UPDATED, () => applyAdaptiveTheme());
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }
+
         function setupRecentTracking() {
             try {
                 const c = getCtx();
@@ -1973,6 +2057,7 @@
               <div class="ccm-setting-row" style="display:flex;align-items:center;gap:10px;margin-top:8px;">
                 <span>主题风格：</span>
                 <select id="ccm_theme_setting" class="text_pole" style="width:auto;min-width:140px;height:36px;">
+                  <option value="auto">🌈 动态自适应 (Auto / 酒馆同色)</option>
                   <option value="dark">暗色玻璃 (Dark)</option>
                   <option value="light">浅色明亮 (Light)</option>
                 </select>
@@ -2038,6 +2123,7 @@
         setupWandMenu();
         setupSlashCommand();
         setupRecentTracking();
+        setupThemeListener();
         // 角色列表可能晚于扩展初始化，稍后修剪一次悬空收藏/最近/文件夹绑定
         setTimeout(() => { try { pruneSettings(); } catch { /* ignore */ } }, 1500);
         setTimeout(() => checkUpdate(true), 3000);
