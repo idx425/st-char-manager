@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '5.0.0';
+    const VERSION = '5.1.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -423,27 +423,26 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 return false;
             }
             try {
-                // 立即收起抽屉面板，让用户无感秒进聊天界面
-                closeCharDrawer();
                 recordRecent(ch.avatar);
 
-                // 确保视图停留在角色列表模式，防止切卡时跳到角色背面(定义/编辑)页
-                const charTab = $('#rm_button_characters');
-                if (charTab.length && typeof charTab.first().trigger === 'function') {
-                    charTab.first().trigger('click');
-                }
+                // 1. 关掉插件自己的所有全屏/详情弹窗
+                $('.ccm-overlay').remove();
+                $('body').removeClass('ccm-body-lock');
 
-                // 触发切卡 DOM 事件
-                const domEl = $(`#rm_print_characters_block .character_select[chid="${idx}"]`);
-                if (domEl.length) {
-                    domEl.trigger('click');
-                } else if (typeof c.selectCharacterById === 'function') {
+                // 2. 切卡：直接使用 c.selectCharacterById 或 c.openCharacterChat 或 DOM 模拟
+                if (typeof c.selectCharacterById === 'function') {
                     await c.selectCharacterById(idx);
                 } else if (typeof c.openCharacterChat === 'function') {
                     await c.openCharacterChat(ch.avatar);
                 } else {
-                    throw new Error('未找到角色元素，且当前酒馆版本不支持 API 切卡');
+                    const domEl = $(`#rm_print_characters_block .character_select[chid="${idx}"]`);
+                    if (domEl.length) domEl.trigger('click');
+                    else throw new Error('当前酒馆版本不支持程序化切卡');
                 }
+
+                // 3. 强行关闭右侧抽屉面板，确保直接露出中间聊天窗口(#chat)
+                closeCharDrawer();
+
                 toastr.success('已切换到「' + esc(charName(ch)) + '」', '角色卡管理');
                 return true;
             } catch (err) {
