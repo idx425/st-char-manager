@@ -403,7 +403,7 @@
     overflow-y: auto;
     display: grid;
     /* 手机 2 列避免过窄；宽屏固定 3 列 */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-auto-rows: max-content;
     gap: 10px;
     padding: 10px 10px 14px;
@@ -1821,7 +1821,7 @@ body .ccm-folder-box {
 #rm_characters_block .ccm-grid,
 #rm_characters_block #ccm_grid {
     display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
 }
 
 @media (min-width: 560px) {
@@ -1955,7 +1955,7 @@ body .ccm-blink {
     #ccm_grid.ccm-grid,
     #ccm_embed #ccm_grid,
     #ccm_embed .ccm-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     }
 }
 
@@ -1965,7 +1965,7 @@ body .ccm-blink {
     .ccm-grid,
     #ccm_grid,
     #ccm_grid.ccm-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: 8px !important;
         padding: 8px 6px 12px !important;
     }
