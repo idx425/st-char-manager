@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.7.0';
+    const VERSION = '4.8.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -423,15 +423,16 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 return false;
             }
             try {
-                if (typeof c.openCharacterChat === 'function') {
-                    await c.openCharacterChat(ch.avatar);
+                // 优先模拟触发 DOM 点击，这是 SillyTavern 最稳定的切卡通道（避免部分酒馆版本的 openCharacterChat 在内部访问未初始化的 chat 变量而抛出 TypeError: Cannot set properties of undefined (setting 'chat')）
+                const domEl = $(`#rm_print_characters_block .character_select[chid="${idx}"]`);
+                if (domEl.length) {
+                    domEl.trigger('click');
                 } else if (typeof c.selectCharacterById === 'function') {
                     await c.selectCharacterById(idx);
+                } else if (typeof c.openCharacterChat === 'function') {
+                    await c.openCharacterChat(ch.avatar);
                 } else {
-                    // 旧版本 context 没有导出 selectCharacterById 时，退回模拟点击角色列表
-                    const el = $(`#rm_print_characters_block .character_select[chid="${idx}"]`);
-                    if (!el.length) throw new Error('当前酒馆版本不支持程序化切换角色');
-                    el.trigger('click');
+                    throw new Error('未找到角色元素，且当前酒馆版本不支持 API 切卡');
                 }
                 recordRecent(ch.avatar);
                 // 切卡后收起右侧面板，直接回到这张卡的聊天界面（否则还停在背面/列表里）
