@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.0.0';
+    const VERSION = '4.0.1';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -294,6 +294,8 @@
                     el.trigger('click');
                 }
                 recordRecent(ch.avatar);
+                // 切卡后收起右侧面板，直接回到这张卡的聊天界面（否则还停在背面/列表里）
+                closeCharDrawer();
                 toastr.success('已切换到「' + esc(charName(ch)) + '」', '角色卡管理');
                 return true;
             } catch (err) {
@@ -1763,6 +1765,9 @@
             // 已嵌入原生面板时不再叠一层弹窗：直接打开酒馆的角色抽屉
             if (settings.takeover && $('#ccm_embed').length) {
                 const panel = $('#right-nav-panel');
+                // 进过聊天/编辑后，面板可能停在"卡片定义(背面)"视图，先强制切回角色列表，
+                // 否则点"打开管理器"会跳到角色卡背面（修 v4.0.1 反馈）
+                $('#rm_button_characters').first().trigger('click');
                 // 抽屉开合状态以 openDrawer class 为准（:visible 在位移隐藏的旧版上会误判）
                 if (panel.length && panel.hasClass('openDrawer')) return;
                 // 原生 handler 绑在 .drawer-toggle 上，优先直接触发它

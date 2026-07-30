@@ -2598,3 +2598,44 @@ html body .ccm-qbtn-unfold {
 .ccm-back-chat {
     margin-right: 2px;
 }
+
+
+/* ============================================================
+   v4.0.1 VIEW-SWITCH, BOTTOM-GAP & COMPACT-BUTTON FIXES
+   ============================================================ */
+
+/* 接管宿主吃满高度，消除手机端底部黑边 */
+#rm_characters_block.ccm-native-takeover,
+#right-nav-panel.ccm-takeover-active #rm_characters_block {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#ccm_embed,
+.ccm-embed-box {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+}
+
+/* 功能按钮（快捷工具栏）更紧凑，更省空间（不改每排卡数） */
+html body .ccm-quickbar,
+html body #ccm_quickbar {
+    gap: 6px !important;
+    padding: 6px 8px 3px !important;
+}
+
+html body .ccm-qbtn,
+html body #ccm_quickbar .ccm-qbtn {
+    min-height: 34px !important;
+    padding: 4px 8px !important;
+    font-size: 0.82em !important;
+    border-radius: 9px !important;
+}
+
+/* 头部按钮略微收敛 */
+html body .ccm-head-btn {
+    padding: 2px 4px !important;
+}
