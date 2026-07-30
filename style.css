@@ -2849,3 +2849,57 @@ html body .ccm-theme-dark .ccm-tile-name {
     background: rgba(15, 23, 42, 0.9) !important;
     color: #f8fafc !important;
 }
+
+
+/* ============================================================
+   v4.3.0 ULTIMATE HEADER BUTTON, ANIMATION & GLOBAL CLEANUP
+   ============================================================ */
+
+/* 终极重构返回按钮：绝对独立、绝对高清、高对比 */
+html body #ccm_embed .ccm-back-btn,
+html body .ccm-embed-box .ccm-back-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    height: 34px !important;
+    padding: 0 12px !important;
+    margin-right: 8px !important;
+    border-radius: 8px !important;
+    background: #0284c7 !important;
+    border: none !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 0.9em !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 9999 !important;
+    position: relative !important;
+}
+
+html body #ccm_embed .ccm-back-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.55) !important;
+}
+
+/* 彻底剥离父级背景裁剪滤镜影响，彻底告别模糊 */
+.ccm-embed-title,
+.ccm-embed-title * {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: var(--ccm-adaptive-fg, inherit) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg, inherit) !important;
+}
+
+/* 面板开合动画性能调优，降低移动端掉帧 */
+#ccm_embed,
+.ccm-embed-box {
+    will-change: transform, opacity !important;
+    transform: translateZ(0) !important;
+}
