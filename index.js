@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '5.2.0';
+    const VERSION = '5.3.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -114,8 +114,8 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
         const charName = (ch) => String(ch.name || (ch.data && ch.data.name) || '未命名');
         const charCreator = (ch) => String((ch.data && ch.data.creator) || '');
         const charVersion = (ch) => String((ch.data && ch.data.character_version) || '');
-        const charDesc = (ch) => String(ch.description || (ch.data && ch.data.description) || '');
-        const charFirstMes = (ch) => String(ch.first_mes || (ch.data && ch.data.first_mes) || '');
+        const charDesc = (ch) => String(ch.description || (ch.data && ch.data.description) || (ch.data && ch.data.system_prompt) || '');
+        const charFirstMes = (ch) => String(ch.first_mes || (ch.data && ch.data.first_mes) || (ch.data && ch.data.first_mes) || '');
         const lastChatTs = (ch) => Number(ch.date_last_chat || 0);
         const addedTs = (ch) => Number(ch.date_added || 0);
 
@@ -441,10 +441,12 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 }
 
                 // 3. 强行关闭右侧抽屉面板，确保直接露出中间聊天窗口(#chat)
+                closeCharDrawer();
                 // 使用宏任务延迟关闭，以抵消部分酒馆版本在触发 DOM 切卡后自动重新展开侧边栏的原生行为
                 setTimeout(closeCharDrawer, 10);
                 setTimeout(closeCharDrawer, 50); // 双重保险，彻底压制原生侧边栏抢占
-
+                setTimeout(closeCharDrawer, 150); // 三重保险
+                setTimeout(closeCharDrawer, 300); // 终极压制
 
                 toastr.success('已切换到「' + esc(charName(ch)) + '」', '角色卡管理');
                 return true;
@@ -978,8 +980,8 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                     secsBox.append($('<div class="ccm-detail-section"><div class="ccm-detail-sec-text ccm-dim">这张卡没有文字内容（描述、开场白等均为空）</div></div>'));
                 }
                 // 提取准确的文本属性长度（全量对象中可能包裹在 data 里）
-                const _desc = String(full.description || (full.data && full.data.description) || '');
-                const _first = String(full.first_mes || (full.data && full.data.first_mes) || '');
+                const _desc = charDesc(full);
+                const _first = charFirstMes(full);
                 const bits = ['描述 ' + _desc.length + ' 字', '开场白 ' + _first.length + ' 字'];
                 if (alts.length) bits.push('备选 ' + alts.length + ' 条');
                 box.find('.ccm-detail-stats').text(bits.join(' · '));
