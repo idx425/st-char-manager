@@ -1,9 +1,20 @@
 /* ============================================================
-   角色卡管理 · 强制深色玻璃 v3.1.4
-   设计语言：Dark Glassmorphism · 浅色主题强制可读 · 弹层居中
-   与 API 快切 (st-api-switcher) 同一套视觉与定位体系
-   三端适配：手机 2 列 / 平板与桌面 3 列
+   角色卡管理 · 强制深色玻璃 v5.8.0 (Universal Desktop / Tablet)
+   设计语言：Dark Glassmorphism · 高对比度自适应 · 零抖动优化
+   与 API 快切 (st-api-switcher) 同一套视觉体系
    ============================================================ */
+
+/* ---- 原生 hot-swap 快速热切换栏与 grip 拖拽条隐藏，整体平滑拉升 ---- */
+#right-nav-panel.ccm-takeover-active #CharListButtonAndHotSwaps,
+#right-nav-panel.ccm-takeover-active #right-nav-panelheader {
+    display: none !important;
+}
+
+#right-nav-panel.ccm-takeover-active #rm_PinAndTabs {
+    margin-top: 2px !important;
+    padding-top: 2px !important;
+    padding-bottom: 4px !important;
+}
 
 .ccm-settings,
 .ccm-overlay,
@@ -17,12 +28,12 @@
     --ccm-fg-muted: #d5deee;
     --ccm-fg-dim: #b7c4d8;
     --ccm-grad: linear-gradient(120deg, var(--ccm-c1), var(--ccm-c2));
-    --ccm-glass: linear-gradient(165deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 2.5%));
+    --ccm-glass: linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
     --ccm-panel: #121826;
     --ccm-panel-solid: #0f1522;
-    --ccm-line: rgb(255 255 255 / 14%);
-    --ccm-line-hi: rgb(255 255 255 / 24%);
-    --ccm-glow: 0 0 22px rgb(34 211 238 / 16%);
+    --ccm-line: rgba(255, 255, 255, 0.14);
+    --ccm-line-hi: rgba(255, 255, 255, 0.24);
+    --ccm-glow: 0 0 22px rgba(34, 211, 238, 0.16);
     --ccm-mono: var(--monoFontFamily, 'SF Mono', 'Consolas', 'JetBrains Mono', monospace);
     --ccm-ease: cubic-bezier(0.22, 0.8, 0.3, 1);
     color: var(--ccm-fg) !important;
@@ -37,7 +48,6 @@
 }
 
 /* ---- 系统状态栏 ---- */
-
 .ccm-sys-bar {
     display: flex;
     align-items: center;
@@ -47,7 +57,7 @@
     border: 1px solid var(--ccm-line);
     border-radius: 13px;
     background: var(--ccm-glass), var(--ccm-panel);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     font-family: var(--ccm-mono);
     font-size: 0.76em;
     letter-spacing: 0.12em;
@@ -62,7 +72,7 @@
     right: 12px;
     bottom: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgb(34 211 238 / 50%), rgb(129 140 248 / 50%), transparent);
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.5), rgba(129, 140, 248, 0.5), transparent);
 }
 
 .ccm-sys-id {
@@ -93,18 +103,17 @@
 }
 
 .ccm-update-avail {
-    border-color: rgb(34 211 238 / 55%) !important;
-    background: linear-gradient(120deg, rgb(34 211 238 / 14%), rgb(129 140 248 / 14%)) !important;
+    border-color: rgba(34, 211, 238, 0.55) !important;
+    background: linear-gradient(120deg, rgba(34, 211, 238, 0.14), rgba(129, 140, 248, 0.14)) !important;
     animation: ccm-avail-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes ccm-avail-pulse {
-    0%, 100% { box-shadow: 0 0 5px rgb(34 211 238 / 22%); }
-    50% { box-shadow: 0 0 16px rgb(34 211 238 / 45%); }
+    0%, 100% { box-shadow: 0 0 5px rgba(34, 211, 238, 0.22); }
+    50% { box-shadow: 0 0 16px rgba(34, 211, 238, 0.45); }
 }
 
 /* ---- 通用按钮 ---- */
-
 .ccm-btn {
     border: 1px solid var(--ccm-line-hi);
     border-radius: 10px;
@@ -113,7 +122,7 @@
 }
 
 .ccm-btn:hover {
-    border-color: rgb(34 211 238 / 45%);
+    border-color: rgba(34, 211, 238, 0.45);
     box-shadow: var(--ccm-glow);
 }
 
@@ -122,18 +131,18 @@
 }
 
 .ccm-btn-primary {
-    border-color: rgb(34 211 238 / 50%);
-    background: linear-gradient(120deg, rgb(34 211 238 / 15%), rgb(129 140 248 / 15%));
+    border-color: rgba(34, 211, 238, 0.5);
+    background: linear-gradient(120deg, rgba(34, 211, 238, 0.15), rgba(129, 140, 248, 0.15));
 }
 
 .ccm-danger:hover {
-    border-color: rgb(248 113 113 / 60%);
-    box-shadow: 0 0 14px rgb(248 113 113 / 18%);
+    border-color: rgba(248, 113, 113, 0.6);
+    box-shadow: 0 0 14px rgba(248, 113, 113, 0.18);
 }
 
 .ccm-fav-on {
-    border-color: rgb(250 204 21 / 55%);
-    background: linear-gradient(120deg, rgb(250 204 21 / 14%), rgb(251 146 60 / 10%));
+    border-color: rgba(250, 204, 21, 0.55);
+    background: linear-gradient(120deg, rgba(250, 204, 21, 0.14), rgba(251, 146, 60, 0.1));
 }
 
 .ccm-open-btn {
@@ -153,41 +162,40 @@
     margin-top: 4px;
 }
 
-/* ---- 弹窗骨架 ---- */
-
+/* ---- 弹窗骨架（零抖动硬件加速） ---- */
 .ccm-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
-    background: rgb(2 6 12 / 62%);
-    backdrop-filter: blur(7px);
-    -webkit-backdrop-filter: blur(7px);
-    animation: ccm-fade 0.18s var(--ccm-ease);
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)) !important;
+    background: rgba(2, 4, 10, 0.85) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    overscroll-behavior: contain;
+    transition: opacity 0.15s ease-out;
 }
 
-@keyframes ccm-fade {
-    from { opacity: 0; }
-}
-
-.ccm-modal-box {
-    display: flex;
-    flex-direction: column;
-    width: min(560px, 100%);
-    max-height: min(86vh, 86dvh);
-    border: 1px solid var(--ccm-line-hi);
-    border-radius: 16px;
-    background: var(--ccm-glass), var(--ccm-panel-solid);
-    box-shadow: 0 24px 70px rgb(0 0 0 / 55%), inset 0 1px 0 rgb(255 255 255 / 6%);
-    overflow: hidden;
-    animation: ccm-pop 0.2s var(--ccm-ease);
-}
-
-@keyframes ccm-pop {
-    from { opacity: 0; transform: translateY(10px) scale(0.985); }
+.ccm-modal-box,
+.ccm-manager-box,
+.ccm-detail-box,
+.ccm-folder-box {
+    position: relative !important;
+    margin: 0 auto !important;
+    transform: none !important;
+    width: min(560px, calc(100vw - 20px)) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: min(88dvh, calc(100vh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 16px !important;
+    background-color: #0f1522 !important;
+    color: #f3f7ff !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .ccm-modal-head {
@@ -201,6 +209,7 @@
     font-size: 0.8em;
     letter-spacing: 0.12em;
     position: relative;
+    flex-shrink: 0;
 }
 
 .ccm-modal-head::after {
@@ -210,7 +219,7 @@
     right: 14px;
     bottom: -1px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgb(34 211 238 / 45%), rgb(129 140 248 / 45%), transparent);
+    background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.45), rgba(129, 140, 248, 0.45), transparent);
 }
 
 .ccm-modal-head > span:first-child {
@@ -222,7 +231,6 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    /* 窄屏时标题可收缩截断，不许把右侧刷新/关闭按钮挤出屏幕 */
     flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
@@ -232,22 +240,6 @@
 .ccm-head-tools,
 .ccm-modal-head .ccm-modal-close {
     flex-shrink: 0;
-}
-
-.ccm-modal-head .ccm-sys-ver {
-    color: rgb(255 255 255 / 45%);
-    -webkit-text-fill-color: rgb(255 255 255 / 45%);
-    font-weight: 400;
-}
-
-.ccm-modal-head .ccm-blink {
-    -webkit-text-fill-color: var(--ccm-c1);
-}
-
-.ccm-head-tools {
-    display: inline-flex;
-    align-items: center;
-    gap: 13px;
 }
 
 .ccm-count {
@@ -263,7 +255,7 @@
     cursor: pointer;
     padding: 7px;
     margin: -7px;
-    opacity: 0.65;
+    opacity: 0.75;
     transition: opacity 0.15s, color 0.15s;
 }
 
@@ -274,15 +266,15 @@
 }
 
 /* ---- 管理器主界面 ---- */
-
 .ccm-manager-box {
-    width: min(920px, 100%);
-    height: min(88vh, 88dvh);
+    width: min(920px, calc(100vw - 20px)) !important;
+    height: min(88dvh, calc(100vh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
 }
 
 .ccm-search-wrap {
     position: relative;
-    margin: 12px 14px 0;
+    margin: 10px 14px 0;
+    flex-shrink: 0;
 }
 
 .ccm-search-icon {
@@ -306,7 +298,6 @@
     cursor: pointer;
     transition: opacity 0.18s, color 0.15s;
     pointer-events: none;
-    -webkit-tap-highlight-color: transparent;
 }
 
 .ccm-search-clear.ccm-show {
@@ -325,13 +316,8 @@
     padding-left: 34px !important;
     padding-right: 34px !important;
     border-radius: 12px !important;
-    transition: box-shadow 0.25s, border-color 0.25s;
-}
-
-.ccm-search:focus {
-    border-color: rgb(34 211 238 / 40%) !important;
-    box-shadow: 0 0 0 1px rgb(34 211 238 / 20%) !important;
-    outline: none !important;
+    min-height: 38px !important;
+    box-sizing: border-box !important;
 }
 
 .ccm-modes {
@@ -339,100 +325,70 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 7px;
-    padding: 10px 14px 0;
+    padding: 8px 14px 0;
+    flex-shrink: 0;
 }
 
 .ccm-fchip,
 .ccm-tchip {
-    border: 1px solid rgb(255 255 255 / 11%);
+    border: 1px solid rgba(255, 255, 255, 0.11);
     border-radius: 999px;
-    background: rgb(255 255 255 / 3.5%);
-    color: rgb(255 255 255 / 72%);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.85);
     font-size: 0.82em;
     padding: 5px 13px;
     cursor: pointer;
-    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, background 0.2s;
     white-space: nowrap;
-}
-
-.ccm-fchip:active,
-.ccm-tchip:active {
-    transform: scale(0.95);
+    flex-shrink: 0;
 }
 
 .ccm-fchip:hover,
 .ccm-tchip:hover {
-    border-color: rgb(34 211 238 / 45%);
+    border-color: rgba(34, 211, 238, 0.45);
 }
 
 .ccm-fchip-on,
 .ccm-tchip-on {
-    border-color: rgb(34 211 238 / 55%);
-    background: rgb(34 211 238 / 10%);
+    border-color: rgba(34, 211, 238, 0.55);
+    background: rgba(34, 211, 238, 0.12);
     color: #d9f6fc;
-    box-shadow: 0 0 12px rgb(34 211 238 / 10%);
 }
 
 .ccm-fchip-sort {
     margin-left: auto;
-    opacity: 0.85;
 }
 
 .ccm-tagbar {
     display: flex;
     gap: 7px;
-    padding: 9px 14px 0;
+    padding: 8px 14px 0;
     overflow-x: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgb(34 211 238 / 25%) transparent;
-}
-
-.ccm-tagbar::-webkit-scrollbar {
-    height: 4px;
-}
-
-.ccm-tagbar::-webkit-scrollbar-thumb {
-    background: rgb(34 211 238 / 25%);
-    border-radius: 4px;
+    flex-shrink: 0;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* ---- 角色网格 ---- */
-
 .ccm-grid {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
-    display: grid;
-    /* 手机 2 列避免过窄；宽屏固定 3 列 */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     grid-auto-rows: max-content;
     gap: 10px;
-    padding: 10px 10px 14px;
+    padding: 10px 14px 14px;
     align-content: start;
     scrollbar-width: thin;
-    scrollbar-color: rgb(34 211 238 / 25%) transparent;
+    -webkit-overflow-scrolling: touch;
 }
 
-.ccm-grid::-webkit-scrollbar {
-    width: 5px;
-}
-
-.ccm-grid::-webkit-scrollbar-thumb {
-    background: rgb(34 211 238 / 22%);
-    border-radius: 5px;
-}
-
-@media (min-width: 560px) {
+@media (max-width: 520px) {
     .ccm-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-        padding: 12px 14px 16px;
-    }
-}
-
-@media (min-width: 1100px) {
-    .ccm-grid {
-        gap: 15px;
-        padding: 15px 18px 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px;
+        padding: 8px 10px 12px;
     }
 }
 
@@ -442,45 +398,34 @@
     background: var(--ccm-glass), var(--ccm-panel);
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.18s var(--ccm-ease), border-color 0.22s, box-shadow 0.28s;
+    transition: transform 0.18s var(--ccm-ease), border-color 0.22s, box-shadow 0.22s;
     position: relative;
-    box-shadow: 0 2px 10px rgb(0 0 0 / 25%), inset 0 1px 0 rgb(255 255 255 / 5%);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
 
 .ccm-tile:hover {
     transform: translateY(-2px);
-    border-color: rgb(255 255 255 / 22%);
-    box-shadow: 0 16px 36px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 8%);
-}
-
-.ccm-tile:hover .ccm-tile-img img {
-    transform: scale(1.045);
-}
-
-.ccm-tile:active {
-    transform: scale(0.97);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
 }
 
 .ccm-tile.ccm-active {
-    border-color: rgb(34 211 238 / 65%);
-    box-shadow: 0 0 0 1px rgb(34 211 238 / 35%), var(--ccm-glow);
+    border-color: rgba(34, 211, 238, 0.75);
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.4), var(--ccm-glow);
 }
 
 .ccm-tile-img {
     position: relative;
-    background: rgb(255 255 255 / 3%);
+    background: rgba(255, 255, 255, 0.03);
 }
 
-/* 比例放在 img 本身而不是容器：容器 aspect-ratio + img height:100% 的
-   循环依赖会让 grid 行高计算塌陷（卡片被压扁），img 直取比例则行高稳定 */
+/* 无 GPU 重载 transition */
 .ccm-tile-img img {
     width: 100%;
     height: auto;
     aspect-ratio: 2 / 3;
     object-fit: cover;
     display: block;
-    transition: transform 0.45s cubic-bezier(0.22, 0.8, 0.3, 1);
-    will-change: transform;
 }
 
 .ccm-tile-img::after {
@@ -488,117 +433,59 @@
     position: absolute;
     inset: auto 0 0;
     height: 52%;
-    background: linear-gradient(180deg, transparent, rgb(4 7 12 / 45%) 55%, rgb(4 7 12 / 88%));
+    background: linear-gradient(180deg, transparent, rgba(4, 7, 12, 0.45) 55%, rgba(4, 7, 12, 0.88));
     pointer-events: none;
 }
 
-.ccm-tile-live {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 8px;
-    z-index: 2;
-    font-family: var(--ccm-mono);
-    font-size: 0.62em;
-    letter-spacing: 0.14em;
-    padding: 3px 8px;
-    border-radius: 999px;
-    border: 1px solid rgb(34 211 238 / 55%);
-    background: rgb(8 12 20 / 75%);
-    color: var(--ccm-c1);
-    animation: ccm-avail-pulse 2s ease-in-out infinite;
-}
-
 .ccm-tile-star,
-.ccm-tile-info {
+.ccm-tile-info,
+.ccm-tile-del {
     position: absolute;
-    top: 5px;
     z-index: 2;
-    padding: 9px;
+    padding: 8px;
     border-radius: 999px;
-    background: rgb(8 12 20 / 68%);
+    background: rgba(8, 12, 20, 0.72);
     border: 1px solid var(--ccm-line);
-    font-size: 0.95em;
+    font-size: 0.9em;
     opacity: 0.88;
     cursor: pointer;
-    transition: transform 0.14s var(--ccm-ease), color 0.15s, border-color 0.15s;
+    transition: color 0.15s, border-color 0.15s;
 }
 
-.ccm-tile-star {
-    right: 6px;
-}
-
-.ccm-tile-info {
-    left: 6px;
-}
+.ccm-tile-star { right: 6px; top: 6px; }
+.ccm-tile-info { left: 6px; top: 6px; }
+.ccm-tile-del { right: 6px; top: 44px; font-size: 0.85em; }
 
 .ccm-tile-star:hover,
 .ccm-tile-info:hover {
     opacity: 1;
     color: var(--ccm-c1);
-    border-color: rgb(34 211 238 / 45%);
-}
-
-.ccm-tile-star:active,
-.ccm-tile-info:active {
-    transform: scale(0.88);
-}
-
-/* 删除按钮竖排在星标下方，把整条底部留给卡名 */
-.ccm-tile-del {
-    position: absolute;
-    right: 6px;
-    top: 46px;
-    z-index: 2;
-    padding: 9px;
-    border-radius: 999px;
-    background: rgb(8 12 20 / 68%);
-    border: 1px solid var(--ccm-line);
-    font-size: 0.88em;
-    opacity: 0.75;
-    cursor: pointer;
-    transition: transform 0.14s var(--ccm-ease), color 0.15s, border-color 0.15s, opacity 0.15s;
+    border-color: rgba(34, 211, 238, 0.45);
 }
 
 .ccm-tile-del:hover {
     opacity: 1;
     color: #f87171;
-    border-color: rgb(248 113 113 / 55%);
-    box-shadow: 0 0 12px rgb(248 113 113 / 18%);
+    border-color: rgba(248, 113, 113, 0.55);
 }
 
-.ccm-tile-del:active {
-    transform: scale(0.88);
-}
+.ccm-star-on { color: #facc15; border-color: rgba(250, 204, 21, 0.45); }
 
-.ccm-star-on {
-    color: #facc15;
-    border-color: rgb(250 204 21 / 45%);
-}
-
-.ccm-star-on:hover {
-    color: #facc15;
-}
-
-/* 名字压在封面底部的渐变上（画廊式），图片撑满整张卡；
-   最多两行换行显示，尽量把长卡名完整放出来 */
 .ccm-tile-name {
     position: absolute;
     inset: auto 0 0;
     z-index: 1;
-    padding: 0 10px 8px;
+    padding: 0 9px 8px;
     font-size: 0.8em;
     font-weight: 600;
-    letter-spacing: 0.02em;
     line-height: 1.3;
-    text-align: left;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     overflow-wrap: anywhere;
-    color: rgb(255 255 255 / 94%);
-    text-shadow: 0 1px 6px rgb(0 0 0 / 65%);
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
     pointer-events: none;
 }
 
@@ -614,254 +501,11 @@
     font-size: 0.9em;
 }
 
-.ccm-empty i {
-    font-size: 2.1em;
-    background: linear-gradient(120deg, var(--ccm-c1), var(--ccm-c2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    opacity: 0.85;
-}
-
-/* ---- 详情弹窗 ---- */
-
-.ccm-detail-box {
-    width: min(620px, 100%);
-}
-
-.ccm-detail-body {
-    overflow-y: auto;
-    padding: 15px;
-    scrollbar-width: thin;
-    scrollbar-color: rgb(34 211 238 / 25%) transparent;
-}
-
-.ccm-detail-body::-webkit-scrollbar {
-    width: 5px;
-}
-
-.ccm-detail-body::-webkit-scrollbar-thumb {
-    background: rgb(34 211 238 / 22%);
-    border-radius: 5px;
-}
-
-.ccm-detail-top {
-    display: flex;
-    gap: 14px;
-}
-
-.ccm-detail-avatar {
-    width: 108px;
-    aspect-ratio: 2 / 3;
-    object-fit: cover;
-    border-radius: 12px;
-    border: 1px solid var(--ccm-line-hi);
-    box-shadow: 0 8px 22px rgb(0 0 0 / 35%);
-    flex-shrink: 0;
-}
-
-.ccm-detail-info {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.ccm-detail-name {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    overflow-wrap: anywhere;
-}
-
-.ccm-detail-name-text {
-    font-size: 1.16em;
-    font-weight: 700;
-    background: var(--ccm-grad);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    overflow-wrap: anywhere;
-    min-width: 0;
-}
-
-.ccm-name-edit {
-    flex: none;
-    font-size: 0.82em;
-    padding: 7px;
-    margin: -7px;
-    opacity: 0.5;
-    cursor: pointer;
-    transition: opacity 0.15s, color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.ccm-name-edit:hover {
-    opacity: 1;
-    color: var(--ccm-c1);
-}
-
-.ccm-name-input {
-    flex: 1 1 auto;
-    min-width: 0;
-    margin: 0 !important;
-    font-size: 0.98em !important;
-}
-
-.ccm-name-op {
-    flex: none;
-    padding: 7px 11px !important;
-}
-
-@media (hover: none) and (pointer: coarse) {
-    .ccm-name-edit {
-        font-size: 0.95em;
-        padding: 10px;
-        margin: -10px;
-        opacity: 0.65;
-    }
-}
-
-.ccm-detail-sub {
-    font-size: 0.8em;
-    opacity: 0.6;
-}
-
-.ccm-detail-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.ccm-tag {
-    font-size: 0.72em;
-    padding: 2px 9px;
-    border-radius: 999px;
-    border: 1px solid var(--ccm-line-hi);
-    background: var(--ccm-glass);
-    opacity: 0.85;
-}
-
-.ccm-detail-stats {
-    font-family: var(--ccm-mono);
-    font-size: 0.72em;
-    letter-spacing: 0.05em;
-    opacity: 0.5;
-    margin-top: auto;
-}
-
-.ccm-detail-btns {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 14px 0 4px;
-}
-
-.ccm-detail-btns .ccm-btn {
-    flex: 1 1 auto;
-    justify-content: center;
-}
-
-.ccm-detail-section {
-    margin-top: 12px;
-    border: 1px solid var(--ccm-line);
-    border-radius: 12px;
-    background: var(--ccm-glass);
-    overflow: hidden;
-}
-
-.ccm-detail-sec-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 12px;
-    font-family: var(--ccm-mono);
-    font-size: 0.72em;
-    letter-spacing: 0.14em;
-    opacity: 1;
-    color: #e8eef8 !important;
-    -webkit-text-fill-color: #e8eef8 !important;
-    border-bottom: 1px solid var(--ccm-line);
-    background: rgb(255 255 255 / 3%);
-}
-
-.ccm-sec-copy {
-    cursor: pointer;
-    padding: 6px;
-    margin: -6px;
-    opacity: 0.55;
-    transition: opacity 0.15s, color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.ccm-sec-copy:hover {
-    opacity: 1;
-    color: var(--ccm-c1);
-}
-
-.ccm-dim {
-    opacity: 0.5;
-}
-
-/* 骨架加载：等完整卡片数据时的占位微光 */
-.ccm-skel {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 14px 2px 4px;
-}
-
-.ccm-skel span {
-    height: 13px;
-    border-radius: 7px;
-    background: linear-gradient(90deg, rgb(255 255 255 / 4%) 25%, rgb(255 255 255 / 10%) 45%, rgb(255 255 255 / 4%) 65%);
-    background-size: 220% 100%;
-    animation: ccm-shimmer 1.3s ease-in-out infinite;
-}
-
-.ccm-skel span:nth-child(2) { width: 82%; }
-.ccm-skel span:nth-child(3) { width: 91%; }
-.ccm-skel span:nth-child(4) { width: 64%; }
-
-@keyframes ccm-shimmer {
-    from { background-position: 120% 0; }
-    to { background-position: -120% 0; }
-}
-
-.ccm-detail-sec-text {
-    padding: 10px 12px;
-    font-size: 0.84em;
-    line-height: 1.6;
-    max-height: 180px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    opacity: 1;
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    scrollbar-width: thin;
-    scrollbar-color: rgb(34 211 238 / 25%) transparent;
-}
-
-.ccm-detail-sec-text::-webkit-scrollbar {
-    width: 4px;
-}
-
-.ccm-detail-sec-text::-webkit-scrollbar-thumb {
-    background: rgb(34 211 238 / 22%);
-    border-radius: 4px;
-}
-
-
 /* ---- 原生面板嵌入接管 ---- */
-
 .ccm-native-takeover > *:not(#ccm_embed) {
     display: none !important;
 }
 
-/* 面板是 flex 布局时，嵌入内容的不换行行（快捷栏等）会把 min-content 宽度
-   撑得比面板还宽，导致网格溢出被裁 —— 必须显式放开收缩 */
 .ccm-native-takeover {
     min-width: 0;
     overflow-x: hidden;
@@ -883,49 +527,18 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 10px 14px 0;
+    padding: 8px 12px 0;
     font-weight: 700;
     font-size: 0.9em;
-    letter-spacing: 0.06em;
-}
-
-.ccm-embed-head .ccm-head-tools {
-    display: flex;
-    align-items: center;
-    gap: 12px;
     flex-shrink: 0;
 }
-
-.ccm-embed-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ccm-embed-title > i.fa-solid {
-    background: linear-gradient(120deg, var(--ccm-c1), var(--ccm-c2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-/* ---- 快捷操作栏 ---- */
 
 .ccm-quickbar {
     display: flex;
     gap: 7px;
-    padding: 9px 14px 0;
+    padding: 8px 12px 0;
     overflow-x: auto;
-    scrollbar-width: none;
-    overscroll-behavior: contain;
-}
-
-.ccm-quickbar::-webkit-scrollbar {
-    display: none;
+    flex-shrink: 0;
 }
 
 .ccm-qbtn {
@@ -933,7 +546,7 @@
     align-items: center;
     gap: 6px;
     border: 1px solid var(--ccm-line-hi);
-    border-radius: 10px;
+    border-radius: 9px;
     background: var(--ccm-glass);
     color: inherit;
     font-size: 0.8em;
@@ -941,61 +554,14 @@
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
-    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, box-shadow 0.2s;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
 }
-
-.ccm-qbtn i {
-    color: var(--ccm-c1);
-    font-size: 0.95em;
-}
-
-.ccm-qbtn:hover {
-    border-color: rgb(34 211 238 / 45%);
-    box-shadow: 0 0 12px rgb(34 211 238 / 12%);
-}
-
-.ccm-qbtn:active {
-    transform: scale(0.95);
-}
-
-@media (pointer: coarse) {
-    .ccm-qbtn {
-        padding: 8px 13px;
-    }
-}
-
-.ccm-takeover-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 2px 0 8px;
-    font-size: 0.88em;
-    opacity: 0.9;
-    cursor: pointer;
-}
-
-/* ---- 文件夹栏 ---- */
-
 
 .ccm-folderbar {
     display: flex;
     gap: 7px;
-    padding: 9px 14px 0;
+    padding: 8px 12px 0;
     overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgb(34 211 238 / 25%) transparent;
-    overscroll-behavior: contain;
-}
-
-.ccm-folderbar::-webkit-scrollbar {
-    height: 4px;
-}
-
-.ccm-folderbar::-webkit-scrollbar-thumb {
-    background: rgb(34 211 238 / 25%);
-    border-radius: 4px;
+    flex-shrink: 0;
 }
 
 .ccm-fdchip {
@@ -1007,131 +573,36 @@
     background: var(--ccm-glass);
     color: inherit;
     font-size: 0.82em;
-    padding: 5px 13px;
+    padding: 5px 12px;
     cursor: pointer;
-    transition: transform 0.14s var(--ccm-ease), border-color 0.2s, box-shadow 0.2s, background 0.2s;
     white-space: nowrap;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-    user-select: none;
-    -webkit-user-select: none;
+    flex-shrink: 0;
 }
-
-.ccm-fdchip > i {
-    color: #e8b45a;
-    opacity: 0.9;
-}
-
-.ccm-fdchip:active {
-    transform: scale(0.95);
-}
-
-.ccm-fdchip:hover {
-    border-color: rgb(232 180 90 / 50%);
-}
-
-.ccm-fdchip-on {
-    border-color: rgb(232 180 90 / 60%);
-    background: linear-gradient(120deg, rgb(232 180 90 / 15%), rgb(129 140 248 / 10%));
-    box-shadow: 0 0 16px rgb(232 180 90 / 12%);
-}
-
-.ccm-fdchip-add {
-    border-style: dashed;
-    opacity: 0.85;
-}
-
-.ccm-fdcount {
-    font-family: var(--ccm-mono);
-    font-size: 0.78em;
-    font-weight: 400;
-    opacity: 0.6;
-    background: rgb(255 255 255 / 7%);
-    border-radius: 999px;
-    padding: 1px 8px;
-}
-
-.ccm-fdchip-sm {
-    font-size: 0.76em;
-    padding: 4px 11px;
-}
-
-/* ---- 分页栏 ---- */
 
 .ccm-pager {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 9px 14px 12px;
+    padding: 8px 12px 10px;
     border-top: 1px solid var(--ccm-line);
     flex-shrink: 0;
-    background: linear-gradient(180deg, rgb(10 14 22 / 20%), rgb(10 14 22 / 45%));
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(10, 14, 22, 0.45);
 }
 
 .ccm-pgbtn {
     border: 1px solid var(--ccm-line-hi);
-    border-radius: 9px;
+    border-radius: 8px;
     background: var(--ccm-glass);
     color: inherit;
-    padding: 6px 12px;
+    padding: 5px 11px;
     cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.14s var(--ccm-ease);
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-
-.ccm-pgbtn:hover:not(:disabled) {
-    border-color: rgb(34 211 238 / 45%);
-    box-shadow: var(--ccm-glow);
-}
-
-.ccm-pgbtn:active:not(:disabled) {
-    transform: scale(0.94);
-}
-
-.ccm-pgbtn:disabled {
-    opacity: 0.3;
-    cursor: default;
 }
 
 .ccm-pginfo {
     font-family: var(--ccm-mono);
     font-size: 0.82em;
-    letter-spacing: 0.08em;
-    opacity: 0.75;
-    min-width: 56px;
-    text-align: center;
-}
-
-.ccm-pginfo-jump {
-    cursor: pointer;
-    border-bottom: 1px dashed rgb(255 255 255 / 25%);
-    padding-bottom: 1px;
-    transition: color 0.15s, border-color 0.15s;
-}
-
-.ccm-pginfo-jump:hover {
-    color: var(--ccm-c1);
-    border-color: rgb(34 211 238 / 45%);
-}
-
-.ccm-pgsize {
-    font-size: 0.76em;
-    font-family: var(--ccm-mono);
-    letter-spacing: 0.04em;
-    margin-left: 4px;
-    opacity: 0.85;
-}
-
-/* ---- 批量管理 ---- */
-
-.ccm-head-on {
-    color: var(--ccm-c1);
-    opacity: 1;
-    text-shadow: 0 0 10px rgb(34 211 238 / 55%);
+    opacity: 0.8;
 }
 
 .ccm-batchbar {
@@ -1139,1117 +610,68 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 7px;
-    padding: 9px 14px;
-    border-top: 1px solid rgb(34 211 238 / 22%);
-    background: linear-gradient(120deg, rgb(34 211 238 / 6%), rgb(129 140 248 / 5%));
+    padding: 8px 12px;
+    border-top: 1px solid rgba(34, 211, 238, 0.22);
+    background: rgba(34, 211, 238, 0.06);
     flex-shrink: 0;
 }
 
-.ccm-batch-count {
-    font-family: var(--ccm-mono);
-    font-size: 0.8em;
-    letter-spacing: 0.06em;
-    color: var(--ccm-c1);
-    margin-right: 3px;
-    white-space: nowrap;
-}
-
-.ccm-batchbar .ccm-btn {
-    font-size: 0.85em;
-    padding: 6px 11px;
-}
-
-.ccm-tile-check {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.7em;
-    color: var(--ccm-c1);
-    background: rgb(8 12 20 / 30%);
-    opacity: 0;
-    transition: opacity 0.15s;
-    pointer-events: none;
-}
-
-.ccm-selected .ccm-tile-check {
-    opacity: 1;
-    background: rgb(34 211 238 / 16%);
-}
-
-.ccm-tile.ccm-selected {
-    border-color: rgb(34 211 238 / 75%);
-    box-shadow: 0 0 0 2px rgb(34 211 238 / 30%), var(--ccm-glow);
-}
-
-/* ---- 文件夹管理 / 选择弹窗 ---- */
-
-.ccm-folder-box {
-    width: min(460px, 100%);
-}
-
-.ccm-folder-body {
-    padding: 14px;
+.ccm-detail-body {
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
+    padding: 14px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.ccm-detail-top {
+    display: flex;
+    gap: 12px;
+}
+
+.ccm-detail-avatar {
+    width: 100px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--ccm-line-hi);
+    flex-shrink: 0;
+}
+
+.ccm-detail-info {
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 11px;
-    scrollbar-width: thin;
-    scrollbar-color: rgb(34 211 238 / 25%) transparent;
-    overscroll-behavior: contain;
-}
-
-.ccm-folder-new {
-    display: flex;
-    gap: 8px;
-}
-
-.ccm-folder-new .text_pole {
-    flex: 1;
-    margin: 0 !important;
-}
-
-.ccm-folder-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    border: 1px solid var(--ccm-line);
-    border-radius: 11px;
-    background: var(--ccm-glass);
-}
-
-.ccm-folder-row > .fa-folder {
-    color: #e8b45a;
-}
-
-.ccm-folder-name {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ccm-folder-rename {
-    flex: 1;
-    margin: 0 !important;
-}
-
-.ccm-folder-op {
-    cursor: pointer;
-    opacity: 0.6;
-    padding: 7px;
-    transition: opacity 0.15s, color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.ccm-folder-op:hover {
-    opacity: 1;
-    color: var(--ccm-c1);
-}
-
-.ccm-folder-del:hover {
-    color: #f87171;
-}
-
-.ccm-pick-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    margin-bottom: 8px;
-    border: 1px solid var(--ccm-line);
-    border-radius: 11px;
-    background: var(--ccm-glass);
-    cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.ccm-pick-item:hover {
-    border-color: rgb(34 211 238 / 45%);
-    box-shadow: var(--ccm-glow);
-}
-
-.ccm-pick-item > i {
-    color: #e8b45a;
-}
-
-.ccm-detail-folderrow {
-    display: flex;
-    flex-wrap: wrap;
     gap: 6px;
 }
 
-@media (pointer: coarse) {
-    .ccm-fdchip,
-    .ccm-pgbtn {
-        padding: 8px 14px;
-    }
-}
-
-/* ---- 触屏与三端细节 ---- */
-
-.ccm-tile,
-.ccm-fchip,
-.ccm-tchip,
-.ccm-btn,
-.ccm-tile-star,
-.ccm-tile-info,
-.ccm-tile-del,
-.ccm-head-btn,
-.ccm-modal-close {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-
-.ccm-tile,
-.ccm-tile-name,
-.ccm-fchip,
-.ccm-tchip {
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-/* 弹窗内滚动不穿透到底下的酒馆页面 */
-.ccm-overlay {
-    overscroll-behavior: contain;
-}
-
-.ccm-grid,
-.ccm-tagbar,
-.ccm-detail-body,
-.ccm-detail-sec-text {
-    overscroll-behavior: contain;
-}
-
-/* ---- 触屏加大点击区域 ---- */
-
-@media (pointer: coarse) {
-    .ccm-fchip,
-    .ccm-tchip {
-        padding: 8px 15px;
-    }
-
-    .ccm-tile-star,
-    .ccm-tile-info,
-    .ccm-tile-del {
-        padding: 12px;
-        font-size: 1.02em;
-    }
-
-    .ccm-tile-del {
-        opacity: 0.85;
-        top: 52px;
-    }
-
-    .ccm-head-btn,
-    .ccm-modal-close {
-        padding: 10px;
-        margin: -10px;
-    }
-}
-
-/* ---- 手机窄屏微调 ---- */
-
-@media (max-width: 360px) {
-    .ccm-modal-head .ccm-sys-ver {
-        display: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .ccm-overlay {
-        padding: 8px;
-    }
-
-    .ccm-manager-box {
-        height: min(92vh, 92dvh);
-    }
-
-    .ccm-detail-top {
-        gap: 11px;
-    }
-
-    .ccm-detail-avatar {
-        width: 92px;
-    }
-}
-
-
-/* ==== FINAL FORCE DARK v3.1.4 HARD OVERRIDES ==== */
-
-.ccm-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)) !important;
-    z-index: 2147483000 !important;
-    transform: none !important;
-    background: rgb(2 4 10 / 86%) !important;
-}
-
-.ccm-modal-box,
-.ccm-manager-box,
-.ccm-detail-box,
-.ccm-folder-box {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    margin: 0 auto !important;
-    transform: none !important;
-    max-width: calc(100vw - 20px) !important;
-    max-height: min(90dvh, calc(100vh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    overflow: hidden !important;
-    background-color: #0f1522 !important;
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff;
-}
-
-.ccm-manager-box {
-    width: min(920px, calc(100vw - 20px)) !important;
-    height: min(90dvh, calc(100vh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.ccm-detail-box,
-.ccm-folder-box {
-    width: min(620px, calc(100vw - 20px)) !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.ccm-detail-body,
-.ccm-folder-body,
-#ccm_grid.ccm-grid {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-.ccm-settings,
-.ccm-settings *,
-.ccm-overlay,
-.ccm-overlay *,
-.ccm-modal-box,
-.ccm-modal-box *,
-.ccm-embed-box,
-.ccm-embed-box *,
-#ccm_embed,
-#ccm_embed * {
-    color: #f3f7ff;
-}
-
-.ccm-settings .ccm-sys-bar,
-.ccm-modal-box,
-.ccm-embed-box,
-#ccm_embed,
-.ccm-tile,
-.ccm-detail-section,
-.ccm-folder-row,
-.ccm-pick-item,
-.ccm-batchbar,
-.ccm-quickbar,
-.ccm-pager,
-.ccm-modes,
-.ccm-folderbar,
-.ccm-tagbar {
-    background-color: #121826 !important;
-    color: #f3f7ff !important;
-}
-
-.ccm-settings .text_pole,
-.ccm-overlay .text_pole,
-.ccm-embed-box .text_pole,
-#ccm_embed .text_pole,
-.ccm-search,
-.ccm-folder-rename,
-.ccm-settings select,
-.ccm-overlay select,
-#ccm_embed select {
+.ccm-detail-name-text {
+    font-size: 1.15em;
+    font-weight: 700;
     color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: #121826 !important;
-    background-color: #121826 !important;
-    border-color: rgb(255 255 255 / 24%) !important;
-    caret-color: #22d3ee !important;
 }
 
-.ccm-settings .menu_button,
-.ccm-overlay .menu_button,
-.ccm-embed-box .menu_button,
-#ccm_embed .menu_button,
-.ccm-btn,
-.ccm-qbtn,
-.ccm-pgbtn,
-.ccm-fchip,
-.ccm-tchip,
-.ccm-fdchip {
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-}
-
-.ccm-settings .checkbox_label,
-.ccm-settings .checkbox_label span,
-.ccm-takeover-row,
-.ccm-takeover-row span,
-.ccm-note,
-.ccm-detail-sec-text,
-.ccm-detail-sec-title,
-.ccm-detail-sec-title *,
-.ccm-detail-sub,
-.ccm-detail-stats,
-.ccm-folder-name,
-.ccm-tile-name,
-.ccm-batch-count,
-.ccm-empty,
-.ccm-tag,
-.ccm-dim {
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    opacity: 1 !important;
+.ccm-detail-sub {
+    font-size: 0.8em;
+    opacity: 0.65;
 }
 
 .ccm-detail-sec-title {
+    padding: 8px 12px;
+    font-family: var(--ccm-mono);
+    font-size: 0.74em;
     color: #e8eef8 !important;
-    -webkit-text-fill-color: #e8eef8 !important;
+    border-bottom: 1px solid var(--ccm-line);
+    background: rgba(255, 255, 255, 0.05);
 }
 
-.ccm-grad-icon,
-.ccm-sys-id,
-.ccm-modal-head > span:first-child,
-.ccm-embed-title > i.fa-solid,
-.ccm-detail-name-text {
-    background: linear-gradient(120deg, #22d3ee, #818cf8) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-}
-
-.ccm-blink {
-    color: #22d3ee !important;
-    -webkit-text-fill-color: #22d3ee !important;
-}
-
-.ccm-fav-on,
-.ccm-tile-star.ccm-fav-on {
-    color: #facc15 !important;
-    -webkit-text-fill-color: #facc15 !important;
-}
-
-.ccm-danger {
-    color: #fca5a5 !important;
-    -webkit-text-fill-color: #fca5a5 !important;
-}
-
-@media (max-width: 480px) {
-    .ccm-overlay {
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 8px !important;
-    }
-    .ccm-manager-box,
-    .ccm-detail-box,
-    .ccm-folder-box,
-    .ccm-modal-box {
-        max-height: min(92dvh, calc(100vh - 16px)) !important;
-    }
-    .ccm-manager-box {
-        width: calc(100vw - 16px) !important;
-        height: min(92dvh, calc(100vh - 16px)) !important;
-    }
-    .ccm-grid {
-        gap: 8px !important;
-        padding: 8px 8px 12px !important;
-    }
-}
-
-/* ==== FINAL v3.1.4 FORCE DARK + CENTER ==== */
-
-.ccm-settings,
-.ccm-overlay,
-.ccm-modal-box,
-.ccm-embed-box,
-#ccm_embed {
-    --ccm-fg: #f3f7ff;
-    --ccm-fg-strong: #ffffff;
-    --ccm-fg-muted: #d5deee;
-    --ccm-panel: #121826;
-    --ccm-panel-solid: #0f1522;
-    --ccm-line: rgb(255 255 255 / 14%);
-    --ccm-line-hi: rgb(255 255 255 / 24%);
-    color: var(--ccm-fg) !important;
-    -webkit-text-fill-color: var(--ccm-fg);
-}
-
-.ccm-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)) !important;
-    z-index: 2147483000 !important;
-    background: rgb(2 4 10 / 86%) !important;
-    overscroll-behavior: contain;
-}
-
-.ccm-modal-box,
-.ccm-manager-box,
-.ccm-detail-box,
-.ccm-folder-box {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    margin: 0 auto !important;
-    transform: none !important;
-    max-width: calc(100vw - 20px) !important;
-    max-height: min(88dvh, calc(100vh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    overflow: hidden !important;
-    background-color: #0f1522 !important;
+.ccm-detail-sec-text {
+    padding: 10px 12px;
+    font-size: 0.84em;
+    line-height: 1.6;
+    max-height: 180px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
     color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff;
-}
-
-.ccm-manager-box {
-    width: min(920px, calc(100vw - 20px)) !important;
-    height: min(88dvh, calc(100vh - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.ccm-settings,
-.ccm-settings *,
-.ccm-overlay,
-.ccm-overlay *,
-.ccm-modal-box,
-.ccm-modal-box *,
-.ccm-embed-box,
-.ccm-embed-box *,
-#ccm_embed,
-#ccm_embed * {
-    color: #f3f7ff;
-}
-
-.ccm-settings .ccm-sys-bar,
-.ccm-modal-box,
-.ccm-embed-box,
-#ccm_embed,
-.ccm-tile,
-.ccm-detail-section,
-.ccm-folder-row,
-.ccm-pick-item,
-.ccm-batchbar,
-.ccm-quickbar,
-.ccm-pager,
-.ccm-modes,
-.ccm-folderbar,
-.ccm-tagbar {
-    background-color: #121826 !important;
-    color: #f3f7ff !important;
-}
-
-.ccm-settings .text_pole,
-.ccm-overlay .text_pole,
-.ccm-embed-box .text_pole,
-#ccm_embed .text_pole,
-.ccm-search,
-.ccm-folder-rename,
-.ccm-settings select,
-.ccm-overlay select,
-#ccm_embed select {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: #121826 !important;
-    background-color: #121826 !important;
-    border-color: rgb(255 255 255 / 24%) !important;
-    caret-color: #22d3ee !important;
-}
-
-.ccm-settings .menu_button,
-.ccm-overlay .menu_button,
-.ccm-embed-box .menu_button,
-#ccm_embed .menu_button,
-.ccm-btn,
-.ccm-qbtn,
-.ccm-pgbtn,
-.ccm-fchip,
-.ccm-tchip,
-.ccm-fdchip,
-.ccm-note,
-.ccm-detail-sec-text,
-.ccm-detail-sec-title,
-.ccm-detail-sub,
-.ccm-detail-stats,
-.ccm-folder-name,
-.ccm-tile-name,
-.ccm-batch-count,
-.ccm-empty,
-.ccm-count,
-.ccm-tag {
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    opacity: 1 !important;
-}
-
-.ccm-detail-sec-title,
-.ccm-detail-sec-title * {
-    color: #e8eefc !important;
-    -webkit-text-fill-color: #e8eefc !important;
-    opacity: 1 !important;
-}
-
-.ccm-detail-sec-text,
-.ccm-detail-sec-text * {
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    opacity: 1 !important;
-}
-
-/* 标题不用渐变透明字：浅色主题下 clip 失败会变纯黑 */
-.ccm-modal-head > span:first-child,
-.ccm-embed-title,
-.ccm-settings .ccm-sys-id {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: none !important;
-    -webkit-background-clip: border-box !important;
-    background-clip: border-box !important;
-}
-
-.ccm-detail-name-text {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: none !important;
-    -webkit-background-clip: border-box !important;
-    background-clip: border-box !important;
-}
-
-.ccm-grad-icon,
-.ccm-sys-id i,
-.ccm-modal-head > span:first-child > i.fa-solid,
-.ccm-embed-title > i.fa-solid {
-    background: linear-gradient(120deg, #22d3ee, #818cf8) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-}
-
-.ccm-blink {
-    color: #22d3ee !important;
-    -webkit-text-fill-color: #22d3ee !important;
-}
-
-.ccm-detail-body,
-.ccm-folder-body,
-#ccm_grid.ccm-grid {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-/* ==== FINAL DESKTOP/MOBILE v3.1.4 HARD OVERRIDES ==== */
-
-.ccm-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: max(8px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)) !important;
-    z-index: 2147483000 !important;
-    transform: none !important;
-    background: rgb(2 4 10 / 78%) !important;
-}
-
-body .ccm-modal-box,
-body .ccm-manager-box,
-body .ccm-detail-box,
-body .ccm-folder-box {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    margin: 0 auto !important;
-    transform: none !important;
-    background-color: #0f1522 !important;
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff;
-}
-
-body .ccm-manager-box {
-    width: min(920px, calc(100vw - 16px)) !important;
-    max-width: calc(100vw - 16px) !important;
-    height: min(88dvh, calc(100vh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    max-height: min(88dvh, calc(100vh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-body .ccm-detail-box,
-body .ccm-folder-box {
-    width: min(620px, calc(100vw - 16px)) !important;
-    max-width: calc(100vw - 16px) !important;
-    max-height: min(88dvh, calc(100vh - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.ccm-grid,
-#ccm_grid,
-#ccm_grid.ccm-grid,
-#ccm_embed #ccm_grid,
-#ccm_embed .ccm-grid,
-#rm_characters_block .ccm-grid,
-#rm_characters_block #ccm_grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-}
-
-@media (min-width: 560px) {
-    .ccm-grid,
-    #ccm_grid,
-    #ccm_grid.ccm-grid,
-    #ccm_embed #ccm_grid,
-    #ccm_embed .ccm-grid,
-    #rm_characters_block .ccm-grid,
-    #rm_characters_block #ccm_grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    }
-}
-
-body .ccm-detail-sec-title,
-body .ccm-detail-sec-title *,
-body .ccm-detail-sec-text,
-body .ccm-detail-sec-text *,
-body .ccm-detail-sub,
-body .ccm-detail-stats,
-body .ccm-tile-name,
-body .ccm-note,
-body .ccm-count,
-body .ccm-tag,
-body .ccm-dim,
-#ccm_detail_modal .ccm-detail-sec-title,
-#ccm_detail_modal .ccm-detail-sec-text {
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    opacity: 1 !important;
-}
-
-body .ccm-detail-sec-title,
-#ccm_detail_modal .ccm-detail-sec-title {
-    background: rgb(255 255 255 / 8%) !important;
-    border-bottom: 1px solid rgb(255 255 255 / 16%) !important;
-    font-weight: 600 !important;
-}
-
-body .ccm-detail-section {
-    background-color: #121826 !important;
-}
-
-body .ccm-modal-head > span:first-child,
-body .ccm-embed-title,
-body .ccm-settings .ccm-sys-id {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: none !important;
-    -webkit-background-clip: border-box !important;
-    background-clip: border-box !important;
-}
-
-body .ccm-detail-name-text {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: none !important;
-    -webkit-background-clip: border-box !important;
-    background-clip: border-box !important;
-}
-
-body .ccm-grad-icon,
-body .ccm-modal-head > span:first-child > i.fa-solid,
-body .ccm-embed-title > i.fa-solid {
-    background: linear-gradient(120deg, #22d3ee, #818cf8) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-}
-
-body .ccm-blink {
-    color: #22d3ee !important;
-    -webkit-text-fill-color: #22d3ee !important;
-}
-
-.ccm-settings,
-.ccm-settings .ccm-sys-bar,
-.ccm-modal-box,
-.ccm-embed-box,
-#ccm_embed,
-.ccm-tile,
-.ccm-detail-section,
-.ccm-folder-row,
-.ccm-pick-item,
-.ccm-batchbar,
-.ccm-quickbar,
-.ccm-pager,
-.ccm-modes,
-.ccm-folderbar,
-.ccm-tagbar {
-    background-color: #121826 !important;
-    color: #f3f7ff !important;
-}
-
-.ccm-settings .text_pole,
-.ccm-overlay .text_pole,
-.ccm-embed-box .text_pole,
-#ccm_embed .text_pole,
-.ccm-search,
-.ccm-folder-rename {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background: #121826 !important;
-    background-color: #121826 !important;
-    border-color: rgb(255 255 255 / 24%) !important;
-    caret-color: #22d3ee !important;
-}
-
-.ccm-detail-body,
-.ccm-folder-body,
-#ccm_grid.ccm-grid {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-@media (max-width: 560px) {
-    body .ccm-manager-box {
-        width: calc(100vw - 10px) !important;
-        max-width: calc(100vw - 10px) !important;
-    }
-    body .ccm-detail-box,
-    body .ccm-folder-box {
-        width: calc(100vw - 10px) !important;
-        max-width: calc(100vw - 10px) !important;
-    }
-    .ccm-grid,
-    #ccm_grid,
-    #ccm_grid.ccm-grid,
-    #ccm_embed #ccm_grid,
-    #ccm_embed .ccm-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
-}
-
-/* ==== ULTRA FINAL v3.1.4 PHONE READABILITY ==== */
-
-@media (max-width: 700px) {
-    .ccm-grid,
-    #ccm_grid,
-    #ccm_grid.ccm-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 8px !important;
-        padding: 8px 6px 12px !important;
-    }
-    .ccm-manager-box,
-    .ccm-detail-box,
-    .ccm-folder-box {
-        width: calc(100vw - 8px) !important;
-        max-width: calc(100vw - 8px) !important;
-    }
-}
-
-.ccm-overlay .ccm-detail-sec-title,
-.ccm-overlay .ccm-detail-sec-title *,
-.ccm-overlay .ccm-detail-sec-text,
-.ccm-overlay .ccm-detail-sec-text *,
-#ccm_embed .ccm-detail-sec-title,
-#ccm_embed .ccm-detail-sec-title *,
-#ccm_embed .ccm-detail-sec-text,
-#ccm_embed .ccm-detail-sec-text *,
-.ccm-detail-box .ccm-detail-sec-title,
-.ccm-detail-box .ccm-detail-sec-title *,
-.ccm-detail-box .ccm-detail-sec-text,
-.ccm-detail-box .ccm-detail-sec-text * {
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    opacity: 1 !important;
-}
-
-.ccm-overlay .ccm-detail-sec-title,
-#ccm_embed .ccm-detail-sec-title,
-.ccm-detail-box .ccm-detail-sec-title {
-    background: rgb(255 255 255 / 8%) !important;
-    color: #e8f0ff !important;
-    -webkit-text-fill-color: #e8f0ff !important;
-}
-
-
-/* ============================================================
-   v3.1.4 TOP + DETAIL CLOSE SAFE (desktop package, shared chrome)
-   ============================================================ */
-
-html body #ccm_embed,
-html body #ccm_embed.ccm-embed-box,
-html body .ccm-manager-box {
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 0 !important;
-}
-
-html body .ccm-embed-head,
-html body .ccm-search-wrap,
-html body #ccm_quickbar,
-html body .ccm-quickbar,
-html body #ccm_modes,
-html body .ccm-modes,
-html body #ccm_folderbar,
-html body .ccm-folderbar,
-html body #ccm_tagbar,
-html body .ccm-tagbar,
-html body .ccm-modal-head,
-html body #ccm_pager,
-html body .ccm-pager,
-html body #ccm_batchbar,
-html body .ccm-batchbar {
-    flex: 0 0 auto !important;
-    flex-shrink: 0 !important;
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-html body #ccm_quickbar .ccm-qbtn,
-html body .ccm-quickbar .ccm-qbtn {
-    min-height: 40px !important;
-    padding: 10px 10px !important;
-    box-sizing: border-box !important;
-}
-
-html body #ccm_search,
-html body .ccm-search {
-    min-height: 42px !important;
-    box-sizing: border-box !important;
-}
-
-html body .ccm-overlay,
-html body #ccm_detail_modal.ccm-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px)) !important;
-    z-index: 2147483000 !important;
-    box-sizing: border-box !important;
-}
-
-html body .ccm-detail-box,
-html body #ccm_detail_modal .ccm-detail-box {
-    display: flex !important;
-    flex-direction: column !important;
-    max-height: min(88dvh, calc(100vh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))) !important;
-    margin: auto !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-    overflow: hidden !important;
-    background-color: #0f1522 !important;
-    color: #f3f7ff !important;
-}
-
-html body .ccm-detail-box .ccm-modal-head,
-html body #ccm_detail_modal .ccm-modal-head {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 5 !important;
-    flex: 0 0 auto !important;
-    min-height: 48px !important;
-    background: #0f1522 !important;
-}
-
-html body .ccm-modal-close,
-html body .ccm-detail-box .ccm-modal-close {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    pointer-events: auto !important;
-}
-
-html body .ccm-detail-body {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-}
-
-html body .ccm-detail-sec-title,
-html body .ccm-detail-sec-title *,
-html body .ccm-detail-sec-text,
-html body .ccm-detail-sec-text * {
-    color: #f3f7ff !important;
-    -webkit-text-fill-color: #f3f7ff !important;
-    opacity: 1 !important;
-}
-
-/* ============================================================
-   v3.2.0 LIGHT THEME, COMPACT MODE & HORIZONTAL SCROLL FIXES
-   ============================================================ */
-
-/* ---- 强制横向滑动 (Tag & Folder Bars) ---- */
-html body #ccm_folderbar,
-html body .ccm-folderbar,
-html body #ccm_tagbar,
-html body .ccm-tagbar,
-html body .ccm-detail-folderrow {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-x !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    scrollbar-width: thin !important;
-}
-
-html body .ccm-tchip,
-html body .ccm-fdchip {
-    flex: 0 0 auto !important;
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-}
-
-/* 折叠快捷栏 */
-html body .ccm-quickbar-collapsed,
-html body #ccm_quickbar.ccm-quickbar-collapsed {
-    display: flex !important;
-    padding: 4px 10px !important;
-}
-
-html body .ccm-qbtn-unfold,
-html body .ccm-qbtn-fold {
-    width: 100% !important;
-    text-align: center !important;
-    opacity: 0.88 !important;
-}
-
-
-
-/* ---------------- 详情弹窗防抖动与硬件加速 ---------------- */
-.ccm-overlay, #ccm_detail_modal {
-    will-change: opacity;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-}
-
-.ccm-detail-box, #ccm_detail_modal .ccm-detail-box {
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    transform: translateZ(0) !important;
-    contain: layout style;
-}
-
-/* Fix back button visibility in dark theme */
-.ccm-back-btn {
-    background: rgba(255, 255, 255, 0.08) !important;
-    color: #cbd5e1 !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-.ccm-back-btn:hover {
-    background: rgba(255, 255, 255, 0.15) !important;
-    color: #ffffff !important;
-}
-
-/* ---------------- 强制暗色样式覆盖防污染 ---------------- */
-html body .ccm-modal-box,
-html body .ccm-detail-box,
-html body .ccm-embed-box {
-    background-color: rgba(15, 20, 28, 0.95) !important;
-    color: #e2e8f0 !important;
-    text-shadow: none !important;
-}
-html body .ccm-btn, 
-html body .ccm-tchip, 
-html body .ccm-fchip, 
-html body .ccm-fdchip,
-html body .ccm-tagbar-input,
-html body .ccm-tagbar-add,
-html body .ccm-sec-copy {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: #e2e8f0 !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    text-shadow: none !important;
-}
-html body .ccm-btn:hover, 
-html body .ccm-tchip:hover, 
-html body .ccm-fchip:hover, 
-html body .ccm-fdchip:hover {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-    color: #ffffff !important;
-}
-html body .ccm-tchip-on,
-html body .ccm-fchip-on,
-html body .ccm-fdchip-on {
-    background-color: rgba(34, 211, 238, 0.15) !important;
-    border-color: rgba(34, 211, 238, 0.4) !important;
-    color: #38bdf8 !important;
-}
-html body .ccm-detail-sec-title,
-html body .ccm-detail-name-text {
-    color: #f8fafc !important;
-}
-html body .ccm-detail-sec-text {
-    color: #cbd5e1 !important;
-}
-
-/* ---------------- 详情页添加标签按钮修复 ---------------- */
-html body .ccm-tag-add {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    padding: 3px 8px !important;
-    border-radius: 8px !important;
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: #e2e8f0 !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    font-size: 0.85em !important;
-    cursor: pointer !important;
-    text-shadow: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-}
-
-html body .ccm-tag-add:hover, html body .ccm-tag-add:active {
-    background-color: rgba(34, 211, 238, 0.15) !important;
-    border-color: rgba(34, 211, 238, 0.4) !important;
-    color: #38bdf8 !important;
 }
