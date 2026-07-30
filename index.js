@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '5.8.0';
+    const VERSION = '5.7.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -442,7 +442,10 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
 
                 // 3. 强行关闭右侧抽屉面板，确保直接露出中间聊天窗口(#chat)
                 closeCharDrawer();
-                setTimeout(closeCharDrawer, 40);
+                // 使用宏任务延迟关闭，以抵消部分酒馆版本在触发 DOM 切卡后自动重新展开侧边栏的原生行为
+                setTimeout(closeCharDrawer, 10);
+                setTimeout(closeCharDrawer, 50); // 双重保险，彻底压制原生侧边栏抢占
+                setTimeout(closeCharDrawer, 100); // 终极保险
 
                 // 4. 终极强行剥夺焦点，防自动弹起键盘遮挡阅读视线
                 const dropKeyboard = () => {
@@ -2188,6 +2191,7 @@ function syncContainerStyles(target) {
                     <span class="ccm-head-tools">
                       <span class="ccm-count ccm-sys-count" class="ccm-count"></span>
                       <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
+                      <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
                       <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
                       <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
