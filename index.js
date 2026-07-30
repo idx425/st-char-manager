@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '5.7.0';
+    const VERSION = '5.8.1';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
