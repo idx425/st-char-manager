@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.9.0';
+    const VERSION = '5.0.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -427,7 +427,13 @@ html body .ccm-qbtn-unfold,html body .ccm-qbtn-fold{grid-column:1/-1!important;w
                 closeCharDrawer();
                 recordRecent(ch.avatar);
 
-                // 异步触发切卡
+                // 确保视图停留在角色列表模式，防止切卡时跳到角色背面(定义/编辑)页
+                const charTab = $('#rm_button_characters');
+                if (charTab.length && typeof charTab.first().trigger === 'function') {
+                    charTab.first().trigger('click');
+                }
+
+                // 触发切卡 DOM 事件
                 const domEl = $(`#rm_print_characters_block .character_select[chid="${idx}"]`);
                 if (domEl.length) {
                     domEl.trigger('click');
@@ -2253,13 +2259,10 @@ function syncContainerStyles(target) {
 
         function setupNativeTakeover() {
             mountEmbed();
-            // 酒馆某些视图延迟渲染，稍后补挂一次
-            setTimeout(mountEmbed, 2500);
-            // 每次打开角色抽屉时确保嵌入还在、数据是新的
             $(document).on('click.ccmtakeover', '#rightNavDrawerIcon, #rightNavHolder .drawer-toggle', () => {
-                setTimeout(() => {
-                    if (mountEmbed()) { renderFilters(); renderGrid(); }
-                }, 250);
+                if (!$('#ccm_embed').length) {
+                    mountEmbed();
+                }
             });
         }
 
