@@ -2754,3 +2754,98 @@ html body .ccm-theme-dark .ccm-tile-name {
     background: rgba(15, 23, 42, 0.85) !important;
     color: #f8fafc !important;
 }
+
+
+/* ============================================================
+   v4.2.0 FULL OVERRIDE FOR RETURN BUTTON & HIGH-CONTRAST THEME
+   ============================================================ */
+
+/* 1. 顶部返回/关闭按钮完全重构 (绝对可见，告别打码) */
+html body #ccm_embed .ccm-back-btn,
+html body .ccm-embed-box .ccm-back-btn,
+html body #ccm_back_chat,
+html body .ccm-back-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    height: 32px !important;
+    padding: 0 10px !important;
+    margin-right: 8px !important;
+    border-radius: 8px !important;
+    background: rgba(34, 211, 238, 0.15) !important;
+    border: 1px solid rgba(34, 211, 238, 0.4) !important;
+    color: #0284c7 !important;
+    -webkit-text-fill-color: #0284c7 !important;
+    font-weight: 700 !important;
+    font-size: 0.88em !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 100 !important;
+}
+
+html body #ccm_embed .ccm-back-btn:hover,
+html body .ccm-back-btn:hover {
+    background: rgba(34, 211, 238, 0.3) !important;
+    color: #0369a1 !important;
+    -webkit-text-fill-color: #0369a1 !important;
+}
+
+html body .ccm-theme-dark #ccm_back_chat,
+html body .ccm-theme-dark .ccm-back-btn {
+    background: rgba(34, 211, 238, 0.2) !important;
+    border: 1px solid rgba(34, 211, 238, 0.5) !important;
+    color: #38bdf8 !important;
+    -webkit-text-fill-color: #38bdf8 !important;
+}
+
+/* 移除 ccm-embed-title 上可能干扰按钮的 gradient / text-clip 样式 */
+html body .ccm-embed-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    color: var(--ccm-adaptive-fg, inherit) !important;
+    -webkit-text-fill-color: var(--ccm-adaptive-fg, inherit) !important;
+    background: none !important;
+}
+
+/* 2. 浅色模式全局高对比度硬清背景 */
+html body .ccm-theme-light #ccm_embed,
+html body .ccm-theme-light .ccm-embed-box,
+html body .ccm-theme-light .ccm-modal-box {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+html body .ccm-theme-light .ccm-tile {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+html body .ccm-theme-light .ccm-tile-name {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+/* 3. 暗色模式高对比度覆盖 */
+html body .ccm-theme-dark #ccm_embed,
+html body .ccm-theme-dark .ccm-embed-box,
+html body .ccm-theme-dark .ccm-modal-box {
+    background: #0f1522 !important;
+    color: #f8fafc !important;
+}
+
+html body .ccm-theme-dark .ccm-tile {
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+html body .ccm-theme-dark .ccm-tile-name {
+    background: rgba(15, 23, 42, 0.9) !important;
+    color: #f8fafc !important;
+}

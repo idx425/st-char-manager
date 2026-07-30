@@ -9,7 +9,7 @@
 
     const MODULE = 'st_char_manager';
     const EXT_NAME = 'st-char-manager';
-    const VERSION = '4.1.0';
+    const VERSION = '4.3.0';
     const REPO_PATH = 'idx425/st-char-manager';
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1522,39 +1522,35 @@
         }
 
 
-        /* ---------------- 动态调色系统 (Adaptive Theme Engine v4.1.0) ---------------- */
+        /* ---------------- 高对比度自适应调色系统 (Adaptive Theme Engine v4.2.0) ---------------- */
         function applyAdaptiveTheme() {
             const root = document.documentElement;
             const bodyStyle = getComputedStyle(document.body);
             const rootStyle = getComputedStyle(root);
 
-            // 1. 获取酒馆主题强调色 (--SmartThemeEmColor)
+            // 1. 提取酒馆强调色，若提取失败则使用高质量默认色彩
             let emColor = rootStyle.getPropertyValue('--SmartThemeEmColor').trim()
                 || bodyStyle.getPropertyValue('--SmartThemeEmColor').trim();
-            if (!emColor || emColor === 'none') emColor = '#22d3ee';
+            if (!emColor || emColor === 'none' || emColor === 'transparent') {
+                emColor = '#22d3ee';
+            }
 
-            // 2. 获取背景着色 (--SmartThemeBlurTintColor / --SmartThemeBodyColor)
-            let bgTintColor = rootStyle.getPropertyValue('--SmartThemeBlurTintColor').trim()
-                || rootStyle.getPropertyValue('--SmartThemeBodyColor').trim()
-                || bodyStyle.backgroundColor;
-
-            // 3. 自动判断明暗（Smart Light / Dark Detection）
-            let isLight = (settings.theme === 'light');
-            if (settings.theme === 'auto' || !settings.theme) {
+            // 2. 精确判定浅色/暗色模式（绝不混色打码）
+            let isLight = false;
+            if (settings.theme === 'light') {
+                isLight = true;
+            } else if (settings.theme === 'dark') {
+                isLight = false;
+            } else {
+                // auto 模式：显式判断酒馆与系统主题，优先遵循酒馆 light-theme 标记
                 if (document.body.classList.contains('light-theme') || $('body').hasClass('ccm-theme-light')) {
                     isLight = true;
-                } else {
-                    const match = bgTintColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-                    if (match) {
-                        const r = parseInt(match[1], 10), g = parseInt(match[2], 10), b = parseInt(match[3], 10);
-                        if ((r * 299 + g * 587 + b * 114) / 1000 > 140) isLight = true;
-                    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-                        isLight = true;
-                    }
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    isLight = true;
                 }
             }
 
-            // 4. 将计算后的主色调与自适应类挂载至容器与 body
+            // 3. 挂载明确的主题类名（彻底清除模糊与混色）
             const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
             const targets = $(sel);
 
@@ -1568,22 +1564,22 @@
                 $('body').removeClass('ccm-theme-light ccm-theme-dark');
             }
 
-            // 注入动态 CSS 变量
+            // 4. 写入高对比度 CSS 变量，绝不与背景混淆
             document.documentElement.style.setProperty('--ccm-adaptive-accent', emColor);
             if (isLight) {
-                document.documentElement.style.setProperty('--ccm-adaptive-bg', 'rgba(248, 250, 252, 0.94)');
-                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', 'rgba(255, 255, 255, 0.88)');
+                document.documentElement.style.setProperty('--ccm-adaptive-bg', '#ffffff');
+                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', '#f8fafc');
                 document.documentElement.style.setProperty('--ccm-adaptive-fg', '#0f172a');
-                document.documentElement.style.setProperty('--ccm-adaptive-border', 'rgba(0, 0, 0, 0.12)');
+                document.documentElement.style.setProperty('--ccm-adaptive-border', '#cbd5e1');
             } else {
-                document.documentElement.style.setProperty('--ccm-adaptive-bg', 'rgba(15, 21, 34, 0.92)');
-                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', 'rgba(30, 41, 59, 0.72)');
-                document.documentElement.style.setProperty('--ccm-adaptive-fg', '#f3f7ff');
-                document.documentElement.style.setProperty('--ccm-adaptive-border', 'rgba(255, 255, 255, 0.12)');
+                document.documentElement.style.setProperty('--ccm-adaptive-bg', '#0f1522');
+                document.documentElement.style.setProperty('--ccm-adaptive-card-bg', '#1e293b');
+                document.documentElement.style.setProperty('--ccm-adaptive-fg', '#f8fafc');
+                document.documentElement.style.setProperty('--ccm-adaptive-border', 'rgba(255, 255, 255, 0.15)');
             }
         }
 
-        function syncContainerStyles(target) {
+function syncContainerStyles(target) {
             const sel = '.ccm-settings, .ccm-overlay, .ccm-modal-box, .ccm-embed-box, #ccm_embed, .ccm-manager-box, #rm_characters_block, #ccm_detail_modal, #rm_character_management';
             const el = (target && target.length) ? $(sel).add(target) : $(sel);
             el.toggleClass('ccm-compact', !!settings.compact);
@@ -1842,6 +1838,7 @@
                       <span id="ccm_count" class="ccm-count"></span>
                       <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-circle-half-stroke ccm-head-btn" id="ccm_theme_btn" title="切换深/浅色主题"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
                       <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
+                      <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
                       <i class="fa-solid fa-xmark ccm-modal-close" title="关闭"></i>
                     </span>
@@ -1878,10 +1875,12 @@
             const embed = $(`
                 <div id="ccm_embed" class="ccm-embed-box">
                   <div class="ccm-embed-head">
-                    <span class="ccm-embed-title"><i class="fa-solid fa-chevron-left ccm-head-btn ccm-back-chat" id="ccm_back_chat" title="返回聊天（收起角色面板）"></i><i class="fa-solid fa-address-book"></i> CHAR·MANAGER</span>
+                    <button type="button" class="ccm-back-btn" id="ccm_back_chat" title="返回聊天（收起角色面板）"><i class="fa-solid fa-chevron-left"></i><span>返回</span></button>
+                    <span class="ccm-embed-title"><i class="fa-solid fa-address-book"></i> CHAR·MANAGER</span>
                     <span class="ccm-head-tools">
                       <span id="ccm_count" class="ccm-count"></span>
                       <i class="fa-solid fa-compress ccm-head-btn" id="ccm_compact_btn" title="切换紧凑模式（调小字号与间距）"></i><i class="fa-solid fa-circle-half-stroke ccm-head-btn" id="ccm_theme_btn" title="切换深/浅色主题"></i><i class="fa-solid fa-chevron-up ccm-head-btn" id="ccm_quick_btn" title="折叠/展开快捷栏"></i><i class="fa-solid fa-square-check ccm-head-btn" id="ccm_batch" title="批量管理（多选移入文件夹/收藏/导出/删除）"></i>
+                      <i class="fa-solid fa-id-card ccm-head-btn" id="ccm_toggle_edit_btn" title="在「角色列表」与「卡片定义(背面)」之间切换"></i>
                       <i class="fa-solid fa-rotate ccm-head-btn" id="ccm_refresh" title="刷新列表"></i>
                       <i class="fa-solid fa-table-list ccm-head-btn" id="ccm_native_back" title="退出接管，恢复酒馆原生角色列表"></i>
                     </span>
